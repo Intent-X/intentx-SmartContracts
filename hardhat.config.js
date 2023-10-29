@@ -28,12 +28,12 @@ module.exports = {
       accounts : PRIVATEKEY
     },
 
-    hardhat: {
+    /*hardhat: {
       forking: {
         url : 'https://mainnet.base.org',
         chainId : 8453
       }
-    },
+    },*/
   },
 
 };
