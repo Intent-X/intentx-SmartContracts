@@ -1,1 +1,0 @@
-# intentx-SmartContracts
