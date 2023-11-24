@@ -32,7 +32,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     uint public maxPenalty;
     uint public minPenalty;
 
-
     uint public lastUpdateTime;
     uint public periodFinish;
     uint public rewardRate;
@@ -55,9 +54,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     event Merge (address indexed owner, uint indexed tokenIdFrom, uint tokenIdTo, uint newBalance, uint newLoyalSince);
     event RewardAdded (uint rewardAdded);
 
-
-
-
     constructor () { _disableInitializers(); }
 
     function initialize ( address _intx, address _usdc ) public initializer {
@@ -75,12 +71,16 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
     }
 
-
-
-    // external view functions:
+    /* -----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+                        EXTERNAL VIEW FUNCTIONS, POSITION INFO
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------- */
     
     /**
-     * @dev Calculates the boost percentage of a position.
+     * @notice Calculates the boost percentage of a position.
      * @param _tokenId the tokenId of the position.
      */
     function boostPercentageOf( uint _tokenId) external view returns(uint boostPercentage) {
@@ -90,7 +90,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     }
 
     /**
-     * @dev Calculates the penalty percentage of a position.
+     * @notice Calculates the penalty percentage of a position.
      * @param _tokenId the tokenId of the position.
      */
     function penaltyPercentageOf( uint _tokenId) external view returns(uint penaltyPercentage) {
@@ -100,7 +100,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     }
 
     /**
-     * @dev Calculates the amount of INTX staked that a position has.
+     * @notice Calculates the amount of INTX staked that a position has.
      * @param _tokenId the tokenId of the position.
      */
     function amountStakedOf( uint _tokenId) external view returns(uint amount) {
@@ -108,30 +108,38 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
             amount = _amountStakedOf(_tokenId);
         }
     }
-    /*
-    function withdrawableAmountOf( uint _tokenId) public view returns(uint withdrawableAmount ) {
-        uint _timestamp = loyalSince[_tokenId];
+    
+    /**
+     * @notice Calculates the amount of INTX that a position will give when unstaked (having in mind the penalty).
+     * @param _tokenId the tokenId of the position.
+     */
+    function withdrawableAmountOf( uint _tokenId) external view returns(uint withdrawableAmount ) {
         uint _amount = _amountStakedOf(_tokenId);
-        if (_timestamp > 0) {
-            withdrawableAmount = _amount - (_amount * _stakeTimeToPenaltyPercentage(_timestamp) / P);
+        uint _penalty = _penaltyPercentageOf(_tokenId);
+        if (_amount > 0) {
+            withdrawableAmount = _amount - (_amount * _penalty / P);
         }
     }
 
+    /**
+     * @notice Calculates the amount of INTX that would be penalized from a position when unstaked.
+     * @param _tokenId the tokenId of the position.
+     */
     function penaltyAmountOf( uint _tokenId) public view returns(uint penaltyAmount ) {
-        uint _timestamp = loyalSince[_tokenId];
         uint _amount = _amountStakedOf(_tokenId);
-        if (_timestamp > 0) {
-            penaltyAmount = _amount * _stakeTimeToPenaltyPercentage(_timestamp) / P;
+        uint _penalty = _penaltyPercentageOf(_tokenId);
+        if (_amount > 0) {
+            penaltyAmount = _amount * _penalty / P;
         }
     }
-    */
-
-
-
-
-
-
-    //internal view functions:
+    
+    /* -----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+                        INTERNAL VIEW FUNCTIONS, POSITION INFO
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------- */
 
     /**
      * @dev Calculates the boost percentage of a position.
@@ -194,27 +202,31 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         }
     }
 
+    /* -----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+                        EXTERNAL FUNCTIONS, INTERACTION POSITIONS
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------- */
 
-
-
-
-
-    //  external user function
-
-    function stake(uint _intxAmount) external {
-        _stake( _msgSender(), _msgSender(), _intxAmount );
+    function stake(uint _intxAmount) external returns(uint _tokenId) {
+        _tokenId = _stake( _msgSender(), _msgSender(), _intxAmount );
     }
 
-    function stakeFor(address _to, uint _intxAmount) external {
-        _stake( _msgSender(), _to, _intxAmount );
+    function stakeFor(address _to, uint _intxAmount) external returns (uint _tokenId) {
+        _tokenId = _stake( _msgSender(), _to, _intxAmount );
     }
 
+    /* -----------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+                        INTERNAL FUNCTIONS, INTERACTION POSITIONS
+    --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------- */
 
-
-
-    // internal functions for interactions
-
-    function _stake(address _from, address _to, uint _intxAmount) internal nonReentrant {
+    function _stake(address _from, address _to, uint _intxAmount) internal nonReentrant returns (uint _tokenId) {
         require(_intxAmount > 0, "Can't stake 0 intX." );
 
         uint _exchangeRate = _exchangeRateInternal();
@@ -234,6 +246,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
         emit Mint (_from, _to, lastTokenId, _tokenMinted, _intxAmount, totalXINTX, totalWeight);
 
+        return lastTokenId;
 
     }
 
@@ -355,8 +368,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         emit Merge (_owner, _tokenFrom, _tokenTo, _balanceNew, block.timestamp - _loyalNew);
     }
 
-
-
     /* -----------------------------------------------------------------------------
     --------------------------------------------------------------------------------
     --------------------------------------------------------------------------------
@@ -364,7 +375,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     --------------------------------------------------------------------------------
     --------------------------------------------------------------------------------
     ----------------------------------------------------------------------------- */
-
 
     /**
      * @dev Receives reward in USDC and makes calculations for the distribution
