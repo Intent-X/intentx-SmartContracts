@@ -48,6 +48,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             address _intx,
             address _raiseToken,
             address _xIntx,
+            address _multisig,
             uint _startSale,
             uint _startVesting
         ) public initializer {
@@ -59,11 +60,12 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         intx = IERC20(_intx);
         raiseToken = IERC20(_raiseToken);
         xIntx = IStakedINTX(_xIntx);
+        multisig = _multisig;
 
         START_SALE = _startSale;
         START_VESTING = _startVesting;
         VESTING_DURATION = 182 days;      // 6 months
-        instantPercentage = 5000;       // 50%
+        instantPercentage = PRECISION/2;       // 50%
 
         totalAllocation = 2_000_000 * 10**18;     // 2 000 000 INTX
         totalToRaise = 400_000 * 10**6;           // 400 000 USDC
@@ -102,18 +104,12 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         require( _amount <= maxBuy, "You can't invest more than 20000 USDC." );
         require(seeded, "Vesting Contract hasn't been seeded yet.");
 
-
         if ( _amount + totalRaised > totalToRaise ) {
             _amount = totalToRaise - totalRaised;
         }
 
         raiseToken.transferFrom(_msgSender(), address(this), _amount);
         totalRaised += _amount;
-
-        //only if we want the vesting to start when public sale ends + 1 day.
-        if ( totalRaised == totalToRaise) {
-            START_VESTING = block.timestamp + 1 days;
-        }
 
         uint amountOwed = totalAllocation * _amount / totalToRaise;
         claimableAmount[_msgSender()] += amountOwed;

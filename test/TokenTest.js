@@ -11,7 +11,6 @@ describe("USDC test token", function () {
 
     const [owner, addr1, addr2] = await ethers.getSigners();
 
-    const USDCt = await ethers.getContractFactory("IntxUpgradeable")
     const usdcTest = await ethers.deployContract("TestUSDC");
 
     await usdcTest.waitForDeployment();

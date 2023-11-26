@@ -18,9 +18,7 @@ library Math {
 
 contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable {
 
-
-    uint public constant WEEK = 60*60*24*7;
-    uint public constant DURATION = 60*60*24*7;
+    uint public constant DURATION = 1 weeks;
     uint public constant P = 1e18; // PRECISSION
     uint constant initialExchangeRate = 1e18;
 
@@ -53,6 +51,21 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     event Split (address indexed owner, uint indexed tokenIdFrom, uint tokenIdTo, uint balanceSplitted);
     event Merge (address indexed owner, uint indexed tokenIdFrom, uint tokenIdTo, uint newBalance, uint newLoyalSince);
     event RewardAdded (uint rewardAdded);
+    event Claim( address indexed owner, uint amountOut, uint[] indexed tokenIds);
+
+    struct PositionInfo {
+        uint tokenId;
+        address owner;
+        uint balanceOfId;
+        uint amountStakedOf;
+        uint withdrawableAmountOf;
+        uint loyalSince;
+        uint boostPercentageOf;
+        uint penaltyPercentageOf;
+        uint penaltyAmountOf;
+        uint pendingReward;
+    }
+
 
     constructor () { _disableInitializers(); }
 
@@ -64,10 +77,10 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         INTX = IERC20(_intx);
         rewardToken = IERC20(_usdc);
 
-        loyaltyDuration = WEEK * 16;        // 16 weeks
-        maxLoyaltyBoost = 25*10**17;        // 2.5x
-        maxPenalty = 25*10**16;             // 25%
-        minPenalty = 5*10**15;              // 0.5%
+        loyaltyDuration = 16 weeks;         // 16 weeks
+        maxLoyaltyBoost = 25 * 1e17;        // 2.5x
+        maxPenalty = 25 * 1e16;             // 25%
+        minPenalty = 5 * 1e15;              // 0.5%
 
     }
 
@@ -78,6 +91,10 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     --------------------------------------------------------------------------------
     --------------------------------------------------------------------------------
     ----------------------------------------------------------------------------- */
+    
+    function currentExchangeRate() external view returns(uint _exchangeRate) {
+        _exchangeRate = _exchangeRateInternal();
+    }
     
     /**
      * @notice Calculates the boost percentage of a position.
@@ -132,6 +149,26 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
             penaltyAmount = _amount * _penalty / P;
         }
     }
+
+    function tokensOfOwner (address _owner) external view returns (uint[] memory ids) {
+        uint len = balanceOf(_owner);
+        ids = new uint[](len);
+        for (uint i = 0; i < len; i++) {
+            ids[i] = tokenOfOwnerByIndex(_owner, i);
+        }
+    }
+
+    function getPositionInfo (uint _tokenId) external view returns (PositionInfo memory _positionInfo) {
+        _positionInfo = _getPositionInfo(_tokenId);
+    }
+
+    function getPositionInfo (uint[] calldata _tokenId) external view returns (PositionInfo[] memory _positionInfo) {
+        uint len = _tokenId.length;
+        _positionInfo = new  PositionInfo[](len);
+        for ( uint i; i < len; i++ ) {
+            _positionInfo[i] = _getPositionInfo(_tokenId[i]);
+        }
+    }
     
     /* -----------------------------------------------------------------------------
     --------------------------------------------------------------------------------
@@ -141,12 +178,36 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     --------------------------------------------------------------------------------
     ----------------------------------------------------------------------------- */
 
+     /**
+     * @dev gives all the important info.
+     * @param _tokenId the tokenId of the position.
+     */
+    function _getPositionInfo( uint _tokenId ) internal view returns(PositionInfo memory positionInfo) {
+
+        uint _amount = _amountStakedOf(_tokenId);
+        uint _penalty = _penaltyPercentageOf(_tokenId);
+
+        positionInfo.tokenId = _tokenId;
+        positionInfo.owner = _ownerOf(_tokenId);
+        positionInfo.balanceOfId = balanceOfId[_tokenId];
+        positionInfo.amountStakedOf= _amount;
+        positionInfo.withdrawableAmountOf = _amount - (_amount * _penalty / P);
+        positionInfo.loyalSince = loyalSince[_tokenId];
+        positionInfo.boostPercentageOf = _boostPercentageOf( _tokenId );
+        positionInfo.penaltyPercentageOf = _penalty;
+        positionInfo.penaltyAmountOf = (_amount * _penalty / P);
+        positionInfo.pendingReward = _rewards[_tokenId];
+    }
+
     /**
      * @dev Calculates the boost percentage of a position.
      * @param _tokenId the tokenId of the position.
      */
     function _boostPercentageOf( uint _tokenId ) internal view returns(uint boostPercentage) {
         uint _timestamp = loyalSince[_tokenId];
+        
+        if ( _timestamp == 0 ) return 0;
+
         uint _timeStaked = block.timestamp - _timestamp;
 
         if ( _timeStaked > loyaltyDuration ) _timeStaked = loyaltyDuration;
@@ -160,6 +221,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
      */
     function _penaltyPercentageOf( uint _tokenId ) internal view returns(uint penaltyPercentage) {
         uint _timestamp = loyalSince[_tokenId];
+
+        if ( _timestamp == 0 ) return 0;
+
         uint _timeStaked = block.timestamp - _timestamp;
 
         if ( _timeStaked > loyaltyDuration ) _timeStaked = loyaltyDuration;
@@ -218,6 +282,39 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         _tokenId = _stake( _msgSender(), _to, _intxAmount );
     }
 
+    function unstake(uint _tokenId) external returns(uint _intxAmountOut) {
+        _intxAmountOut = _unstake( _tokenId );
+    }
+
+    function split(uint _tokenId, uint[] calldata _splitWeights) external returns ( uint[] memory _tokenIds) {
+        _tokenIds = _split( _tokenId, _splitWeights);
+    }
+
+    function merge(uint _tokenFrom, uint tokenTo) external {
+        _merge(_tokenFrom, tokenTo);
+    }
+
+    function add(uint _intxAmount, uint tokenTo) external {
+        uint _tokenFrom = _stake( _msgSender(), _msgSender(), _intxAmount );
+        _merge(_tokenFrom, tokenTo);
+    }
+
+    function unstakePartially(uint _tokenId, uint _xIntxAmountWithdraw) external returns(uint _intxAmountOut, uint _newTokenId) {
+
+        uint _balance = balanceOfId[_tokenId];
+        require(_balance > _xIntxAmountWithdraw, "You can't partially withdraw more than you own");
+
+        uint[] memory _splitWeights = new uint[](2);
+        _splitWeights[0] = _xIntxAmountWithdraw;
+        _splitWeights[1] = _balance - _xIntxAmountWithdraw;
+
+        uint[] memory _tokenIds = _split( _tokenId, _splitWeights);
+
+        _intxAmountOut = _unstake( _tokenIds[0] );
+        _newTokenId = _tokenIds[1];
+
+    }
+
     /* -----------------------------------------------------------------------------
     --------------------------------------------------------------------------------
     --------------------------------------------------------------------------------
@@ -235,6 +332,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
         lastTokenId++;
         _mint(_to, lastTokenId);
+        _updateReward(_tokenId);
         
         uint _tokenMinted = _intxAmount * P / _exchangeRate;
         loyalSince[lastTokenId] = block.timestamp;
@@ -250,11 +348,12 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
     }
 
-    function _unstake( uint _tokenId ) internal nonReentrant {
+    function _unstake( uint _tokenId ) internal nonReentrant returns( uint _intxAmountOut) {
         require(_exists(_tokenId), "This position doesn't exist.");
         address _owner = _ownerOf(_tokenId);
         require(_owner == _msgSender(), "Not your xINTX NFT.");
         
+        _updateReward(_tokenId);
         
         uint _amount = balanceOfId[_tokenId];
 
@@ -262,7 +361,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         uint _exchangeRate = _exchangeRateInternal();
         uint _intxAmount = (_amount * _exchangeRate / P);
         uint _intxAmountPenalization = _intxAmount * _penaltyPercentageOf(_tokenId) / P ;
-        uint _intxAmountOut = _intxAmount - _intxAmountPenalization;
+        _intxAmountOut = _intxAmount - _intxAmountPenalization;
 
 
         delete loyalSince[_tokenId];
@@ -277,42 +376,53 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
 
         totalXINTX -= _amount;
-        INTX.transfer( _owner, _intxAmountOut);
         totalWeight -= _weight;
+        INTX.transfer( _owner, _intxAmountOut);
 
         emit Burn (_owner, _tokenId, _amount,  _intxAmountOut, _intxAmountPenalization, totalXINTX);
     }
 
-    function _split( uint _tokenId, uint[] calldata _weights ) internal nonReentrant {
+    function _split( uint _tokenId, uint[] memory _splitWeights ) internal nonReentrant returns( uint[] memory _tokenIds ) {
         require(_exists(_tokenId), "This position doesn't exist.");
         address _owner = _ownerOf(_tokenId);
         require(_owner == _msgSender(), "Not your xINTX NFT.");
-        uint len = _weights.length;
+        uint len = _splitWeights.length;
         require(len > 1, "You can't split this XINTX less than 2 times");
         require(len <= 10, "You can't split this XINTX more than 10 times");
-        
+        _tokenIds = new uint[](len);
+        _updateReward(_tokenId);
 
         uint _totalWeightSplit = 0;
         uint _originalBalance = balanceOfId[_tokenId];
         uint _originalLoyal = loyalSince[_tokenId];
+        uint _originalRewardPerWeightPaid = _rewardPerWeightPaid[_tokenId];
+
+        totalXINTX -= _originalBalance;
+        totalWeight -= _lastWeightOfTokenId[_tokenId];
 
         for (uint i; i < len; i++) {
-            _totalWeightSplit +=_weights[i];
+            _totalWeightSplit += _splitWeights[i];
         }
 
         for (uint i; i < len; i++) {
 
-            uint splitAmount = (_weights[i] * _originalBalance) / _totalWeightSplit;
+            uint splitAmount = (_splitWeights[i] * _originalBalance) / _totalWeightSplit;
             
             require(splitAmount > 0, "Can't split 0 xINTX." );
 
             lastTokenId++;
             _mint(_owner, lastTokenId);
+            _tokenIds[i] = lastTokenId;
             
             loyalSince[lastTokenId] = _originalLoyal;
             balanceOfId[lastTokenId] = splitAmount;
             
-            _lastWeightOfTokenId[lastTokenId] = splitAmount * _boostPercentageOf(lastTokenId) / P;
+            uint _lastWeight = splitAmount * _boostPercentageOf(lastTokenId) / P;
+            _lastWeightOfTokenId[lastTokenId] = _lastWeight;
+            _rewardPerWeightPaid[lastTokenId] = _originalRewardPerWeightPaid;
+
+            totalXINTX += splitAmount;
+            totalWeight += _lastWeight;
 
             emit Split(_owner, _tokenId, lastTokenId, splitAmount);
         }
@@ -334,8 +444,10 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         require(_exists(_tokenFrom), "This position doesn't exist.");
         require(_exists(_tokenTo), "This position doesn't exist.");
         address _owner = _ownerOf(_tokenFrom);
-        require(_owner == _msgSender(), "Not your xINTX NFT.");
-        require(_owner == _ownerOf(_tokenTo), "Not your xINTX NFT.");
+        require(_owner == _msgSender(), "From NFT isn't your xINTX NFT.");
+        require(_owner == _ownerOf(_tokenTo), "To NFT isn't xINTX NFT.");
+        _updateReward(_tokenFrom);
+        _updateReward(_tokenTo);
 
         uint _balanceFrom = balanceOfId[_tokenFrom];
         uint _loyalFrom = block.timestamp - loyalSince[_tokenFrom];
@@ -346,11 +458,12 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         uint _balanceNew = _balanceFrom + _balanceTo;
         require(_balanceNew > 0, "Can't make a position with 0 xINTX." );
         uint _loyalNew = (_loyalFrom * _balanceFrom / _balanceNew) + (_loyalTo * _balanceTo / _balanceNew);
-        uint _newWeight = _balanceNew * _boostPercentageOf(_tokenTo) / P;
         
 
         balanceOfId[_tokenTo] = _balanceNew;
         loyalSince[_tokenTo] = block.timestamp - _loyalNew;
+
+        uint _newWeight = _balanceNew * _boostPercentageOf(_tokenTo) / P;
         _lastWeightOfTokenId[_tokenTo] = _newWeight;
 
 
@@ -447,5 +560,41 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         return
             ((averageTokenWeight * (rewardPerWeight() - _rewardPerWeightPaid[_tokenId]) ) / 1e18) +
             _rewards[_tokenId];
+    }
+
+    function claim(uint[] calldata _tokenIds) external {
+
+        uint len = _tokenIds.length;
+        uint _tokenId;
+        address _owner;
+        uint _amountOut = pendingRewards[_owner];
+
+        for (uint i; i < len; i++ ) {
+            _tokenId = _tokenIds[i];
+            require(_exists(_tokenId), "This position doesn't exist.");
+
+            _owner = _ownerOf(_tokenId);
+            require(_owner == _msgSender(), "You are not the owner of this position.");
+
+            _updateReward(_tokenId);
+
+            _amountOut += _rewards[_tokenId];
+            _rewards[_tokenId] = 0;
+
+        }
+
+        pendingRewards[_owner] = 0;
+
+        rewardToken.transfer( _owner, _amountOut);     
+
+        emit Claim( _owner, _amountOut, _tokenIds);
+    }
+
+    function updateWeights( uint[] calldata _tokenIds ) external {
+        uint len = _tokenIds.length;
+
+        for ( uint i; i < len; i++ ) {
+            _updateReward(_tokenIds[i]);
+        }
     }
 }
