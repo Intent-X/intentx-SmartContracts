@@ -44,6 +44,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     mapping(uint => uint) private _lastWeightOfTokenId;
     mapping(uint => uint) private _rewardPerWeightPaid;
     mapping(uint => uint) private _rewards;
+
     mapping(address => uint) private pendingRewards;
 
     event Mint (address indexed from, address indexed to, uint indexed tokenId, uint amountMinted, uint amountIntxIn, uint totalXINTXNew, uint newTotalWeight);
@@ -493,9 +494,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
      * @dev Receives reward in USDC and makes calculations for the distribution
      * @param _rewardAmount the amount of USDC that will be distributed
      */
-    function notifyReward( uint _rewardAmount ) external nonReentrant {
+    function notifyReward( uint _rewardAmount ) external nonReentrant onlyOwner{
         rewardToken.transferFrom( _msgSender(), address(this), _rewardAmount);
-        //_rewardAmount = _rewardAmount * P;
+        _rewardAmount = _rewardAmount * P;
 
         if (block.timestamp >= periodFinish) {
             rewardRate = _rewardAmount / DURATION;
@@ -511,7 +512,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
 
         //uint balance = rewardToken.balanceOf(address(this)) * P;
-        uint balance = rewardToken.balanceOf(address(this));
+        uint balance = rewardToken.balanceOf(address(this)) * P;
         require(rewardRate <= balance / DURATION, "Provided reward too high");
 
         lastUpdateTime = block.timestamp;
@@ -585,7 +586,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
         pendingRewards[_owner] = 0;
 
-        rewardToken.transfer( _owner, _amountOut);     
+        rewardToken.transfer( _owner, _amountOut/P);     
 
         emit Claim( _owner, _amountOut, _tokenIds);
     }

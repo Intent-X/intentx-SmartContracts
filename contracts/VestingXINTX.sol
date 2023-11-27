@@ -17,6 +17,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     uint public START_VESTING;
     uint public VESTING_DURATION;
     uint private totalAmountNeeded;
+    address public multisig;
 
     bool public allowChange;
     bool public allowOwnerChange;
@@ -41,6 +42,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     function initialize(
             address _intx,
             address _xIntx,
+            address _multisig,
             uint _startVesting,
             uint _vestingDuration,
             address[] calldata _receivers,
@@ -56,6 +58,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         intx = IERC20(_intx);
         xIntx = IStakedINTX(_xIntx);
 
+        multisig = _multisig;
 
         START_VESTING = _startVesting;
         VESTING_DURATION = _vestingDuration;
@@ -118,7 +121,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             claimedAmount[_newAddress] = claimedAmount[_oldAddress];
         } else {
             uint amountLeft = claimableAmount[ _oldAddress ] - claimedAmount[_oldAddress];
-            intx.transfer(_msgSender(), amountLeft);
+            intx.transfer(multisig, amountLeft);
         }
 
         claimableAmount[ _oldAddress ] = 0;
