@@ -4,14 +4,14 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 
 interface IStakedINTX {
     function stakeFor(address _to, uint _intxAmount) external returns ( uint _tokenId) ;
 }
 
-contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
+contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
     uint constant public PRECISION = 10000;
     uint public instantPercentage;
@@ -55,7 +55,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         ) public initializer {
         
         __ReentrancyGuard_init();
-        __Ownable_init();
+        __Ownable2Step_init();
 
 
         intx = IERC20(_intx);
@@ -176,4 +176,6 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         }
     }
 
+    function renounceOwnership() public virtual override onlyOwner {}
+    
 }

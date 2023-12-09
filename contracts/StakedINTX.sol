@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -16,7 +16,7 @@ library Math {
     }
 }
 
-contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable {
+contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, Ownable2StepUpgradeable {
 
     uint public constant DURATION = 1 weeks;
     uint public constant P = 1e18; // PRECISSION
@@ -73,7 +73,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     function initialize ( address _intx, address _usdc ) public initializer {
         __ReentrancyGuard_init();
         __ERC721_init( "Staked INTX", "XINTX" );
-        __Ownable_init();
+        __Ownable2Step_init();
 
         INTX = IERC20(_intx);
         rewardToken = IERC20(_usdc);
@@ -600,4 +600,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
             _updateReward(_tokenIds[i]);
         }
     }
+
+    function renounceOwnership() public virtual override onlyOwner {}
+
 }
