@@ -3,6 +3,8 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
@@ -12,6 +14,8 @@ interface IStakedINTX {
 }
 
 contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
+
+    using SafeERC20 for IERC20;
 
     uint constant public PRECISION = 10000;
     uint public instantPercentage;
@@ -81,7 +85,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     function deposit() external onlyOwner {
         require(!seeded, "Vesting Contract Already seeded with initial amount.");
 
-        intx.transferFrom(_msgSender(), address(this), totalAllocation);
+        intx.safeTransferFrom(_msgSender(), address(this), totalAllocation);
         intx.approve(address(xIntx), type(uint256).max);
 
         seeded = true;
@@ -93,7 +97,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         
         uint _amount = raiseToken.balanceOf(address(this));
         require( _amount > 0, "Not enough raiseToken to withdraw");
-        raiseToken.transfer(multisig, _amount);
+        raiseToken.safeTransfer(multisig, _amount);
 
         emit Withdraw( _msgSender(), multisig, _amount );
     }
@@ -103,7 +107,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         
         uint _amount = intx.balanceOf(address(this));
         require( _amount > 0, "Not enough Intx to withdraw");
-        intx.transfer(multisig, _amount);
+        intx.safeTransfer(multisig, _amount);
 
         emit WithdrawUnallocatedIntx( _msgSender(), multisig, _amount );
     }
@@ -120,7 +124,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
             _amount = totalToRaise - totalRaised;
         }
 
-        raiseToken.transferFrom(_msgSender(), address(this), _amount);
+        raiseToken.safeTransferFrom(_msgSender(), address(this), _amount);
         totalRaised += _amount;
 
         uint amountOwed = totalAllocation * _amount / totalToRaise;

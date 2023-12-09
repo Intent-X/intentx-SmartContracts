@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 library Math {
     function max(uint a, uint b) internal pure returns (uint) {
@@ -17,6 +18,8 @@ library Math {
 }
 
 contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2StepUpgradeable {
+
+    using SafeERC20 for IERC20;
 
     uint public constant DURATION = 1 weeks;
     uint public constant P = 1e18; // PRECISSION
@@ -321,7 +324,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         uint _exchangeRate = _exchangeRateInternal();
 
-        INTX.transferFrom( _from, address(this), _intxAmount);
+        INTX.safeTransferFrom( _from, address(this), _intxAmount);
 
         lastTokenId++;
         _mint(_to, lastTokenId);
@@ -369,7 +372,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         totalXINTX -= _amount;
         totalWeight -= _weight;
-        INTX.transfer( _owner, _intxAmountOut);
+        INTX.safeTransfer( _owner, _intxAmountOut);
 
         emit Burn (_owner, _tokenId, _amount,  _intxAmountOut, _intxAmountPenalization, totalXINTX);
     }
@@ -488,7 +491,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
      * @param _rewardAmount the amount of USDC that will be distributed
      */
     function notifyReward( uint _rewardAmount ) external nonReentrant onlyOwner{
-        rewardToken.transferFrom( _msgSender(), address(this), _rewardAmount);
+        rewardToken.safeTransferFrom( _msgSender(), address(this), _rewardAmount);
         _rewardAmount = _rewardAmount * P;
 
         if (block.timestamp >= periodFinish) {
@@ -579,7 +582,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         pendingRewards[_msgSender()] = 0;
 
-        rewardToken.transfer( _msgSender(), _amountOut/P);     
+        rewardToken.safeTransfer( _msgSender(), _amountOut/P);     
 
         emit Claim( _owner, _amountOut, _tokenIds);
     }

@@ -3,6 +3,8 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
@@ -12,6 +14,8 @@ interface IStakedINTX {
 }
 
 contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
+
+    using SafeERC20 for IERC20;
 
     uint constant public PRECISION = 10000;
     uint public START_VESTING;
@@ -82,7 +86,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     function deposit() external onlyOwner {
         require(!seeded, "Vesting Contract Already seeded with initial amount.");
 
-        intx.transferFrom(_msgSender(), address(this), totalAmountNeeded);
+        intx.safeTransferFrom(_msgSender(), address(this), totalAmountNeeded);
         intx.approve(address(xIntx), type(uint256).max);
 
         seeded = true;
@@ -121,7 +125,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
             claimedAmount[_newAddress] = claimedAmount[_oldAddress];
         } else {
             uint amountLeft = claimableAmount[ _oldAddress ] - claimedAmount[_oldAddress];
-            intx.transfer(multisig, amountLeft);
+            intx.safeTransfer(multisig, amountLeft);
         }
 
         claimableAmount[ _oldAddress ] = 0;
