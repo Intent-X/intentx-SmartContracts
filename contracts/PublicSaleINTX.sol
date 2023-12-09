@@ -40,6 +40,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     event Claimed(address indexed user, uint amount, uint _tokenId);
     event Seeded( address operator, uint amount);
     event Withdraw( address operator, address _to, uint amount);
+    event WithdrawUnallocatedIntx( address operator, address _to, uint amount);
     event Bought( address indexed user, uint usdcAmount, uint intxAmount, uint intxAmountTotal);
 
     constructor () { _disableInitializers(); }
@@ -91,9 +92,20 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     function withdraw() external onlyOwner {
         
         uint _amount = raiseToken.balanceOf(address(this));
+        require( _amount > 0, "Not enough raiseToken to withdraw");
         raiseToken.transfer(multisig, _amount);
 
         emit Withdraw( _msgSender(), multisig, _amount );
+    }
+
+    function withdrawUnallocatedIntx() external onlyOwner {
+        require( block.timestamp >= START_VESTING, "Sale hasn't ended yet.");
+        
+        uint _amount = intx.balanceOf(address(this));
+        require( _amount > 0, "Not enough Intx to withdraw");
+        intx.transfer(multisig, _amount);
+
+        emit WithdrawUnallocatedIntx( _msgSender(), multisig, _amount );
     }
 
     function buy( uint _amount ) external {
