@@ -333,7 +333,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
         lastTokenId++;
         _mint(_to, lastTokenId);
-        _updateReward(_tokenId);
+        _updateReward(lastTokenId);
         
         uint _tokenMinted = _intxAmount * P / _exchangeRate;
         loyalSince[lastTokenId] = block.timestamp;
