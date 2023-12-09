@@ -30,7 +30,6 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     uint public totalToRaise;
     uint public totalRaised;
     uint public minBuy;
-    uint public maxBuy;
     bool public seeded;
     
     IERC20 public intx;
@@ -80,7 +79,6 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         totalToRaise = 400_000 * 10**6;           // 400 000 USDC
 
         minBuy = 10 * 10**6;
-        maxBuy = 20_000 * 10**6;
 
         allowChange = true;
 
@@ -121,7 +119,6 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         require( block.timestamp <= START_VESTING, "Sale has ended.");
         require( block.timestamp >= START_SALE, "Sale hasn't started yet.");
         require( _amount >= minBuy, "You can't invest less than 10 USDC." );
-        require( _amount <= maxBuy, "You can't invest more than 20000 USDC." );
         require(seeded, "Vesting Contract hasn't been seeded yet.");
 
         if ( _amount + totalRaised > totalToRaise ) {
