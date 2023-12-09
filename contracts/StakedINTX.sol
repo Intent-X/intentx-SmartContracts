@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
@@ -16,7 +16,7 @@ library Math {
     }
 }
 
-contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, Ownable2StepUpgradeable {
+contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2StepUpgradeable {
 
     uint public constant DURATION = 1 weeks;
     uint public constant P = 1e18; // PRECISSION
@@ -148,14 +148,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         uint _penalty = _penaltyPercentageOf(_tokenId);
         if (_amount > 0) {
             penaltyAmount = _amount * _penalty / P;
-        }
-    }
-
-    function tokensOfOwner (address _owner) external view returns (uint[] memory ids) {
-        uint len = balanceOf(_owner);
-        ids = new uint[](len);
-        for (uint i = 0; i < len; i++) {
-            ids[i] = tokenOfOwnerByIndex(_owner, i);
         }
     }
 
@@ -602,5 +594,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
     }
 
     function renounceOwnership() public virtual override onlyOwner {}
+    function _approve(address to, uint256 tokenId) internal virtual override {}
+    function _setApprovalForAll(address owner, address operator, bool approved) internal virtual override {}
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override {}
 
 }

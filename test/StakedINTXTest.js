@@ -66,7 +66,6 @@ describe("StakedINTX upgradeable contract", function () {
       const timeStamp = (await ethers.provider.getBlock("latest")).timestamp
 
       const balanceOfOwner = await stakedINTX.balanceOf( owner.address );
-      const tokensOfOwner = await stakedINTX.tokensOfOwner(owner.address);
       const firstTokenId = await stakedINTX.lastTokenId();
 
       /*const boostPercentageOf = await stakedINTX.boostPercentageOf(firstTokenId);
@@ -91,7 +90,6 @@ describe("StakedINTX upgradeable contract", function () {
     } = await stakedINTX["getPositionInfo (uint _tokenId)"](firstTokenId);
 
       expect( ethers.parseUnits("1",0) ).to.equal(balanceOfOwner);
-      expect( tokensOfOwner[ tokensOfOwner.length - 1 ] ).to.equal(firstTokenId);
 
       expect( ethers.parseUnits("1",18) ).to.equal(boostPercentageOf);
       expect( ethers.parseUnits("25",16) ).to.equal(penaltyPercentageOf);
