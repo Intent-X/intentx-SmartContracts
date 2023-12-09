@@ -568,7 +568,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
         uint len = _tokenIds.length;
         uint _tokenId;
         address _owner;
-        uint _amountOut = pendingRewards[_owner];
+        uint _amountOut = pendingRewards[_msgSender()];
 
         for (uint i; i < len; i++ ) {
             _tokenId = _tokenIds[i];
@@ -584,9 +584,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
         }
 
-        pendingRewards[_owner] = 0;
+        pendingRewards[_msgSender()] = 0;
 
-        rewardToken.transfer( _owner, _amountOut/P);     
+        rewardToken.transfer( _msgSender(), _amountOut/P);     
 
         emit Claim( _owner, _amountOut, _tokenIds);
     }
