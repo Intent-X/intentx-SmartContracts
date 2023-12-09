@@ -58,6 +58,9 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         __ReentrancyGuard_init();
         __Ownable2Step_init();
 
+        require ( _intx != address(0), "Can't use 0x address");
+        require ( _xIntx != address(0), "Can't use 0x address");
+        require ( _multisig != address(0), "Can't use 0x address");
 
         intx = IERC20(_intx);
         xIntx = IStakedINTX(_xIntx);

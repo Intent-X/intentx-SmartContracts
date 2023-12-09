@@ -55,20 +55,24 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
             address _xIntx,
             address _multisig,
             uint _startSale,
-            uint _startVesting
+            uint _saleDuration
         ) public initializer {
         
         __ReentrancyGuard_init();
         __Ownable2Step_init();
 
-
+        require ( _intx != address(0), "Can't use 0x address");
+        require ( _raiseToken != address(0), "Can't use 0x address");
+        require ( _xIntx != address(0), "Can't use 0x address");
+        require ( _multisig != address(0), "Can't use 0x address");
+        
         intx = IERC20(_intx);
         raiseToken = IERC20(_raiseToken);
         xIntx = IStakedINTX(_xIntx);
         multisig = _multisig;
 
         START_SALE = _startSale;
-        START_VESTING = _startVesting;
+        START_VESTING = _startSale + _saleDuration;
         VESTING_DURATION = 182 days;      // 6 months
         instantPercentage = PRECISION/2;       // 50%
 

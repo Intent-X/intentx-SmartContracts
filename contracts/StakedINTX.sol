@@ -78,6 +78,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         __ERC721_init( "Staked INTX", "XINTX" );
         __Ownable2Step_init();
 
+        require ( _intx != address(0), "Can't use 0x address");
+        require ( _usdc != address(0), "Can't use 0x address");
+
         INTX = IERC20(_intx);
         rewardToken = IERC20(_usdc);
 
