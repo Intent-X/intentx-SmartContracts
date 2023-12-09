@@ -352,10 +352,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         uint _weight = _amount * _boostPercentageOf(_tokenId) / P;
         uint _exchangeRate = _exchangeRateInternal();
-        uint _intxAmount = (_amount * _exchangeRate / P);
-        uint _intxAmountPenalization = _intxAmount * _penaltyPercentageOf(_tokenId) / P ;
-        _intxAmountOut = _intxAmount - _intxAmountPenalization;
-
+        uint _intxAmount = (_amount * _exchangeRate);
+        uint _intxAmountPenalization = _intxAmount * _penaltyPercentageOf(_tokenId);
+        _intxAmountOut = (_intxAmount - _intxAmountPenalization) / P;
 
         delete loyalSince[_tokenId];
         delete balanceOfId[_tokenId];
