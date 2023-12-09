@@ -452,9 +452,11 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721EnumerableUpgradeable, 
 
         uint _balanceFrom = balanceOfId[_tokenFrom];
         uint _loyalFrom = block.timestamp - loyalSince[_tokenFrom];
+        if ( _loyalFrom > loyaltyDuration ) _loyalFrom = loyaltyDuration;
 
         uint _balanceTo = balanceOfId[_tokenTo];
         uint _loyalTo = block.timestamp - loyalSince[_tokenTo];
+        if ( _loyalTo > loyaltyDuration ) _loyalTo = loyaltyDuration;
 
         uint _balanceNew = _balanceFrom + _balanceTo;
         require(_balanceNew > 0, "Can't make a position with 0 xINTX." );
