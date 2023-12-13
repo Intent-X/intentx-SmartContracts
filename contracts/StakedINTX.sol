@@ -510,7 +510,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
 
-        //uint balance = rewardToken.balanceOf(address(this)) * P;
         uint balance = rewardToken.balanceOf(address(this)) * P;
         require(rewardRate <= balance / DURATION, "Provided reward too high");
 
