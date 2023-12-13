@@ -31,6 +31,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     uint public totalRaised;
     uint public minBuy;
     bool public seeded;
+    uint public totalClaimable;
     
     IERC20 public intx;
     IERC20 public raiseToken;
@@ -107,7 +108,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     function withdrawUnallocatedIntx() external onlyOwner {
         require( block.timestamp >= START_VESTING, "Sale hasn't ended yet.");
         
-        uint _amount = intx.balanceOf(address(this));
+        uint _amount = totalAllocation - totalClaimable;
         require( _amount > 0, "Not enough Intx to withdraw");
         intx.safeTransfer(multisig, _amount);
 
@@ -129,6 +130,7 @@ contract PublicSaleINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         totalRaised += _amount;
 
         uint amountOwed = totalAllocation * _amount / totalToRaise;
+        totalClaimable += amountOwed;
         claimableAmount[_msgSender()] += amountOwed;
 
         emit Bought( _msgSender(), _amount, amountOwed, claimableAmount[_msgSender()]);
