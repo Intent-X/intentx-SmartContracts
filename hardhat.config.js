@@ -1,7 +1,7 @@
 /** @type import('hardhat/config').HardhatUserConfig */
 
-require('@openzeppelin/hardhat-upgrades');
 require("@nomicfoundation/hardhat-chai-matchers")
+require("@openzeppelin/hardhat-upgrades");
 
 const { PRIVATEKEY, APIKEY} = require("./pvkey.js");
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
     ]
   },
 
-
+  defaultNetwork: "base_mainnet",
   networks : {
     
     base_mainnet: {
