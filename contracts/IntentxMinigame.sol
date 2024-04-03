@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract CoreTradeRewarder is OwnableUpgradeable {
+contract IntentXMinigame is OwnableUpgradeable {
     using ECDSA for bytes32;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -83,10 +83,10 @@ contract CoreTradeRewarder is OwnableUpgradeable {
 
     function getMessageHash(
         address _user,
-        uint _amountCore,
+        uint _amountIntentX,
         uint _timestamp
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_user, _amountCore, _timestamp));
+        return keccak256(abi.encodePacked(_user, _amountIntentX, _timestamp));
     }
 
     function getEthSignedMessageHash(bytes32 _messageHash)
