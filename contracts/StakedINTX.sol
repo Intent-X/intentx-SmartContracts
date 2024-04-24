@@ -71,7 +71,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     }
 
 
-    constructor () { _disableInitializers(); }
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize ( address _intx, address _usdc ) public initializer {
         __ReentrancyGuard_init();
@@ -161,7 +163,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         _positionInfo = _getPositionInfo(_tokenId);
     }
 
-    function getPositionInfo (uint[] calldata _tokenId) external view returns (PositionInfo[] memory _positionInfo) {
+    function getPositionsInfo (uint[] calldata _tokenId) external view returns (PositionInfo[] memory _positionInfo) {
         uint len = _tokenId.length;
         _positionInfo = new  PositionInfo[](len);
         for ( uint i; i < len; i++ ) {
