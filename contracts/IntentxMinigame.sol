@@ -56,7 +56,7 @@ contract IntentXMinigame is OwnableUpgradeable {
     }
 
     function claim(
-        address _user,
+        address payable _user,
         uint256 _amountMnt,
         uint256 _timestamp,
         bytes memory signature
@@ -75,7 +75,8 @@ contract IntentXMinigame is OwnableUpgradeable {
             uint256 withdrawableAmount = _amountMnt - claimed[msg.sender];
             claimed[msg.sender] = _amountMnt;
 
-            (msg.sender, withdrawableAmount);
+            bool success = _user.send(withdrawableAmount);
+            require(success, "MNT Transfer failed");
 
             emit Claim(msg.sender, block.timestamp , withdrawableAmount);
         }

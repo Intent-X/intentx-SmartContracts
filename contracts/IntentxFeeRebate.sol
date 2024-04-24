@@ -40,6 +40,15 @@ contract IntentXFeeRebate is OwnableUpgradeable {
         emit SetIntentXTrustedAddress(_intentxTrustedAddress);
     }
 
+    function getClaimedBalances( address[] calldata addresses ) external view returns( uint[] memory claimedAmounts ) {
+        uint len = addresses.length;
+        claimedAmounts = new uint[](len);
+
+        for ( uint i = 0; i < len; i++ ) {
+            claimedAmounts[i] = claimed[ addresses[i] ];
+        }
+    }
+
     /// @notice Set the reward token
     /// @param _intentxTrustedAddress address of the new IntentX Trusted Backend
     function setIntentxTrustedAddress(address _intentxTrustedAddress) external onlyOwner() {
@@ -56,7 +65,7 @@ contract IntentXFeeRebate is OwnableUpgradeable {
     }
 
     function claim(
-        address _user,
+        address payable _user,
         uint256 _amountMnt,
         uint256 _timestamp,
         bytes memory signature
@@ -75,7 +84,8 @@ contract IntentXFeeRebate is OwnableUpgradeable {
             uint256 withdrawableAmount = _amountMnt - claimed[msg.sender];
             claimed[msg.sender] = _amountMnt;
 
-            (msg.sender, withdrawableAmount);
+            bool success = _user.send(withdrawableAmount);
+            require(success, "Transfer failed");
 
             emit Claim(msg.sender, block.timestamp , withdrawableAmount);
         }

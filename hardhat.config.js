@@ -3,7 +3,7 @@
 require("@nomicfoundation/hardhat-chai-matchers")
 require("@openzeppelin/hardhat-upgrades");
 
-const { INTENTXPRIVATEKEY, APIKEY} = require("./pvkey.js");
+const { INTENTXPRIVATEKEY, INTENTXPRIVATEKEYTEST, APIKEY} = require("./pvkey.js");
 
 module.exports = {
   solidity: {
@@ -60,6 +60,7 @@ module.exports = {
     mantle_mainnet: {
       url: 'https://mantle-rpc.publicnode.com	',
       chainId : 5000,
+      //accounts : INTENTXPRIVATEKEYTEST
       accounts : INTENTXPRIVATEKEY
     },
 

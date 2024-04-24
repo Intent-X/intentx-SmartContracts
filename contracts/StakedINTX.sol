@@ -530,7 +530,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
             _rewards[_tokenId] = earned(_tokenId);
 
             uint _newWeight = balanceOfId[_tokenId] * _boostPercentageOf(_tokenId) / P;
-            totalWeight -= _lastWeightOfTokenId[_tokenId] + _newWeight;
+            totalWeight = (totalWeight - _lastWeightOfTokenId[_tokenId]) + _newWeight;
 
             _lastWeightOfTokenId[_tokenId] = _newWeight;
             _rewardPerWeightPaid[_tokenId] = rewardPerWeightStored;
