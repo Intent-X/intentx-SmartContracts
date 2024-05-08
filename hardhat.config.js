@@ -29,8 +29,8 @@ module.exports = {
         network: "mantle",
         chainId: 5000,
         urls: {
-          apiURL: "https://explorer.mantle.xyz/api",
-          browserURL: "https://explorer.mantle.xyz"
+          apiURL: "https://api.mantlescan.xyz/api",
+          browserURL: "https://mantlescan.xyz"
         }
       }
     ]
@@ -60,8 +60,8 @@ module.exports = {
     mantle_mainnet: {
       url: 'https://mantle-rpc.publicnode.com	',
       chainId : 5000,
-      accounts : INTENTXPRIVATEKEYTEST
-      //accounts : INTENTXPRIVATEKEY
+      //accounts : INTENTXPRIVATEKEYTEST
+      accounts : INTENTXPRIVATEKEY
     },
 
     /*hardhat: {

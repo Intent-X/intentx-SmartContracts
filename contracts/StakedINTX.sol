@@ -48,7 +48,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     mapping(uint => uint) private _rewardPerWeightPaid;
     mapping(uint => uint) private _rewards;
 
-    mapping(address => uint) private pendingRewards;
+    mapping(address => uint) public pendingRewards;
 
     event Mint (address indexed from, address indexed to, uint indexed tokenId, uint amountMinted, uint amountIntxIn, uint totalXINTXNew, uint newTotalWeight);
     event Burn (address indexed owner, uint indexed tokenId, uint amountBurned, uint amountIntxOut, uint amountIntxPenalized, uint totalXINTXNew);
@@ -56,13 +56,14 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     event Merge (address indexed owner, uint indexed tokenIdFrom, uint tokenIdTo, uint newBalance, uint newLoyalSince);
     event RewardAdded (uint rewardAdded);
     event Claim( address indexed owner, uint amountOut, uint[] indexed tokenIds);
+    event statusEvent( uint intxBalance, uint totalXINTX, uint totalWeight);
 
     struct PositionInfo {
         uint tokenId;
         address owner;
         uint balanceOfId;
         uint amountStakedOf;
-        uint withdrawableAmountOf;
+        uint withdrawableAmountOf;      // In case of a Withdraw of the position, the amount of intx that the user would receive after the penalization
         uint loyalSince;
         uint boostPercentageOf;
         uint penaltyPercentageOf;
@@ -277,27 +278,39 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
     function stake(uint _intxAmount) external returns(uint _tokenId) {
         _tokenId = _stake( _msgSender(), _msgSender(), _intxAmount );
+        emitStatus();
+
     }
 
     function stakeFor(address _to, uint _intxAmount) external returns (uint _tokenId) {
         _tokenId = _stake( _msgSender(), _to, _intxAmount );
+        emitStatus();
+
     }
 
     function unstake(uint _tokenId) external returns(uint _intxAmountOut) {
         _intxAmountOut = _unstake( _tokenId );
+        emitStatus();
+
     }
 
     function split(uint _tokenId, uint[] calldata _splitWeights) external returns ( uint[] memory _tokenIds) {
         _tokenIds = _split( _tokenId, _splitWeights);
+        emitStatus();
+
     }
 
     function merge(uint _tokenFrom, uint tokenTo) external {
         _merge(_tokenFrom, tokenTo);
+        emitStatus();
+
     }
 
     function add(uint _intxAmount, uint tokenTo) external {
         uint _tokenFrom = _stake( _msgSender(), _msgSender(), _intxAmount );
         _merge(_tokenFrom, tokenTo);
+        emitStatus();
+
     }
 
     function unstakePartially(uint _tokenId, uint _xIntxAmountWithdraw) external returns(uint _intxAmountOut, uint _newTokenId) {
@@ -313,6 +326,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         _intxAmountOut = _unstake( _tokenIds[0] );
         _newTokenId = _tokenIds[1];
+
+        emitStatus();
 
     }
 
@@ -483,6 +498,10 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         emit Merge (_owner, _tokenFrom, _tokenTo, _balanceNew, block.timestamp - _loyalNew);
     }
 
+    function emitStatus() internal {
+        emit statusEvent( _getCurrentIntxBalance(), totalXINTX, totalWeight);
+    }
+
     /* -----------------------------------------------------------------------------
     --------------------------------------------------------------------------------
     --------------------------------------------------------------------------------
@@ -496,6 +515,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
      * @param _rewardAmount the amount of USDC that will be distributed
      */
     function notifyReward( uint _rewardAmount ) external nonReentrant onlyOwner{
+        _updateReward(0);
+
         rewardToken.safeTransferFrom( _msgSender(), address(this), _rewardAmount);
         _rewardAmount = _rewardAmount * P;
 
@@ -518,6 +539,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + DURATION;
         emit RewardAdded(_rewardAmount/P);
+        emitStatus();
+
     }
 
     ///@dev last time reward
@@ -563,6 +586,22 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
             _rewards[_tokenId];
     }
 
+
+    ///@notice total earned rewards
+    function earned(uint[] calldata _tokenIds) public view returns (uint totalReward, uint[] memory claimableAmounts) {
+        
+        uint len = _tokenIds.length;
+
+        claimableAmounts = new uint[](len);
+
+        for ( uint i = 0; i<len; i++ ) {
+            uint _claimable = earned(_tokenIds[i]);
+            totalReward += _claimable;
+            claimableAmounts[i] = _claimable;
+        }
+
+    }
+
     function claim(uint[] calldata _tokenIds) external {
 
         uint len = _tokenIds.length;
@@ -589,6 +628,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         rewardToken.safeTransfer( _msgSender(), _amountOut/P);     
 
         emit Claim( _owner, _amountOut, _tokenIds);
+        emitStatus();
+
     }
 
     function updateWeights( uint[] calldata _tokenIds ) external {
@@ -597,6 +638,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         for ( uint i; i < len; i++ ) {
             _updateReward(_tokenIds[i]);
         }
+        emitStatus();
+
     }
 
     function renounceOwnership() public virtual override onlyOwner {}

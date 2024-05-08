@@ -18,5 +18,8 @@
     "chai": "^4.3.10",
     "ethers": "^6.8.0",
     "hardhat": "^2.18.2"
+  },
+  "dependencies": {
+    "@openzeppelin/cli": "^2.8.2"
   }
 }
