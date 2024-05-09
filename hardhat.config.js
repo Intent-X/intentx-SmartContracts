@@ -3,6 +3,9 @@
 require("@nomicfoundation/hardhat-chai-matchers")
 require("@openzeppelin/hardhat-upgrades");
 
+//tdly = require("@tenderly/hardhat-tenderly");
+//tdly.setup();
+
 const { INTENTXPRIVATEKEY, INTENTXPRIVATEKEYTEST, APIKEY} = require("./pvkey.js");
 
 module.exports = {
@@ -18,6 +21,17 @@ module.exports = {
         }
       },
     ]
+  },
+
+  tenderly: {
+    username: "intentxdev",
+    project: "intentxsmartcontracts",
+ 
+    // Contract visible only in Tenderly.
+    // Omitting or setting to `false` makes it visible to the whole world.
+    // Alternatively, admin-rpc verification visibility using
+    // an environment variable `TENDERLY_PRIVATE_VERIFICATION`.
+    privateVerification: true,
   },
 
   etherscan: {
@@ -58,10 +72,10 @@ module.exports = {
     },
 
     mantle_mainnet: {
-      url: 'https://mantle-rpc.publicnode.com	',
+      url: 'https://mantle-rpc.publicnode.com',
       chainId : 5000,
-      //accounts : INTENTXPRIVATEKEYTEST
-      accounts : INTENTXPRIVATEKEY
+      accounts : INTENTXPRIVATEKEYTEST
+      //accounts : INTENTXPRIVATEKEY
     },
 
     /*hardhat: {

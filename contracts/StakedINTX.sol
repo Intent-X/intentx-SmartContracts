@@ -36,8 +36,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     uint public lastUpdateTime;
     uint public periodFinish;
     uint public rewardRate;
-    uint private rewardPerWeightStored;
-    uint private totalWeight;
+    uint public rewardPerWeightStored;
+    uint public totalWeight;
 
     IERC20 public INTX;
     IERC20 public rewardToken;
@@ -69,6 +69,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         uint penaltyPercentageOf;
         uint penaltyAmountOf;
         uint pendingReward;
+        uint lastWeightKnown;
     }
 
 
@@ -199,6 +200,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         positionInfo.penaltyPercentageOf = _penalty;
         positionInfo.penaltyAmountOf = (_amount * _penalty / P);
         positionInfo.pendingReward = _rewards[_tokenId];
+        positionInfo.lastWeightKnown = _lastWeightOfTokenId[_tokenId];
     }
 
     /**
@@ -375,9 +377,9 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         uint _weight = _amount * _boostPercentageOf(_tokenId) / P;
         uint _exchangeRate = _exchangeRateInternal();
-        uint _intxAmount = (_amount * _exchangeRate);
-        uint _intxAmountPenalization = _intxAmount * _penaltyPercentageOf(_tokenId);
-        _intxAmountOut = (_intxAmount - _intxAmountPenalization) / P;
+        uint _intxAmount = (_amount * _exchangeRate) / P;
+        uint _intxAmountPenalization = (_intxAmount * _penaltyPercentageOf(_tokenId)) / P;
+        _intxAmountOut = (_intxAmount - _intxAmountPenalization);
 
         delete loyalSince[_tokenId];
         delete balanceOfId[_tokenId];
@@ -518,7 +520,6 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         _updateReward(0);
 
         rewardToken.safeTransferFrom( _msgSender(), address(this), _rewardAmount);
-        _rewardAmount = _rewardAmount * P;
 
         if (block.timestamp >= periodFinish) {
             rewardRate = _rewardAmount / DURATION;
@@ -571,18 +572,17 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
             
             //time past without reward
             uint _timeDiff = lastTimeRewardApplicable() - lastUpdateTime;
-            return rewardPerWeightStored + ( _timeDiff * rewardRate * 1e18 / totalWeight );	
+            return rewardPerWeightStored + ( _timeDiff * rewardRate * 1e36 / totalWeight );	
         }	
     }
 
     ///@notice earned rewards for nft
     function earned(uint _tokenId) public view returns (uint) {
-        uint currentTokenWeight = balanceOfId[_tokenId] * _boostPercentageOf(_tokenId) / P;
-        uint averageTokenWeight = ( _lastWeightOfTokenId[_tokenId] + currentTokenWeight) / 2;
+        uint _lastWeight = _lastWeightOfTokenId[_tokenId];
 
 
         return
-            ((averageTokenWeight * (rewardPerWeight() - _rewardPerWeightPaid[_tokenId]) ) / 1e18) +
+            ((_lastWeight * (rewardPerWeight() - _rewardPerWeightPaid[_tokenId]) ) / 1e36) +
             _rewards[_tokenId];
     }
 
@@ -625,7 +625,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         pendingRewards[_msgSender()] = 0;
 
-        rewardToken.safeTransfer( _msgSender(), _amountOut/P);     
+        rewardToken.safeTransfer( _msgSender(), _amountOut);     
 
         emit Claim( _owner, _amountOut, _tokenIds);
         emitStatus();

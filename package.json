@@ -20,6 +20,8 @@
     "hardhat": "^2.18.2"
   },
   "dependencies": {
-    "@openzeppelin/cli": "^2.8.2"
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@openzeppelin/cli": "^2.8.2",
+    "@tenderly/hardhat-tenderly": "^2.2.2"
   }
 }
