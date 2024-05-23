@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 interface IStakedINTX {
     function stakeFor(address _to, uint _intxAmount) external returns ( uint _tokenId) ;
-    function addRestrictedToken( uint _tokenId, uint8 _type ) external ;
 }
 
 contract TeamVestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
@@ -157,11 +156,32 @@ contract TeamVestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable
 
             if ( amountToReceive > 0) {
                 claimedAmount[_msgSender()] += amountToReceive;
+                intx.approve(address(xIntx), amountToReceive);
                 uint _tokenId = xIntx.stakeFor(_msgSender(), amountToReceive);
-                xIntx.addRestrictedToken(_tokenId, 1);
                 
                 emit Claimed( _msgSender(), amountToReceive, _tokenId);
             }
+        }
+    }
+
+
+    function claimableNow( address _user) public view returns (uint amountToReceive) {
+        require(claimableAmount[_user] != 0,"This address doesn't have any amount to claim.");
+        require(seeded, "Vesting Contract hasn't been seeded yet.");
+        require( claimedAmount[_user] < claimableAmount[_user], "You have already claimed all your allocation" );
+
+        if (block.timestamp > START_VESTING) {
+
+            uint amount = claimableAmount[_user];
+
+            uint timeElapsed = block.timestamp - START_VESTING;
+
+            if ( timeElapsed > VESTING_DURATION) timeElapsed = VESTING_DURATION;
+            
+            uint percentToReceive = timeElapsed * PRECISION / VESTING_DURATION;
+                
+            amountToReceive = (amount * percentToReceive / PRECISION) - claimedAmount[_user];
+
         }
     }
 

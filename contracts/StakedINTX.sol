@@ -677,7 +677,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     }
 
     function setTeamVestingContract (address _teamVestingContract) external onlyOwner {
-        require ( teamVestingContract == address(0), "Team vesting contract is already initialized." );
+        //require ( teamVestingContract == address(0), "Team vesting contract is already initialized." );
         teamVestingContract = _teamVestingContract;
     }
 
