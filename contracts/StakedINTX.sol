@@ -50,6 +50,10 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
     mapping(address => uint) public pendingRewards;
 
+
+    mapping(uint => uint8) public restrictedToken;
+    address public teamVestingContract;
+
     event Mint (address indexed from, address indexed to, uint indexed tokenId, uint amountMinted, uint amountIntxIn, uint totalXINTXNew, uint newTotalWeight);
     event Burn (address indexed owner, uint indexed tokenId, uint amountBurned, uint amountIntxOut, uint amountIntxPenalized, uint totalXINTXNew);
     event Split (address indexed owner, uint indexed tokenIdFrom, uint tokenIdTo, uint balanceSplitted);
@@ -91,7 +95,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         loyaltyDuration = 16 weeks;         // 16 weeks
         maxLoyaltyBoost = 25 * 1e17;        // 2.5x
         maxPenalty = 25 * 1e16;             // 25%
-        minPenalty = 5 * 1e15;              // 0.5%
+        minPenalty = 1 * 1e16;              // 1%
 
     }
 
@@ -286,29 +290,46 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
     function stakeFor(address _to, uint _intxAmount) external returns (uint _tokenId) {
         _tokenId = _stake( _msgSender(), _to, _intxAmount );
+
+        if( _msgSender() == teamVestingContract) {
+            restrictedToken[_tokenId] = 1;
+        }
+
         emitStatus();
 
     }
 
     function unstake(uint _tokenId) external returns(uint _intxAmountOut) {
+                
+        require( !isRestrictedToken(_tokenId),  "This token is restricted, you can't unstake/transfer/split");
+
         _intxAmountOut = _unstake( _tokenId );
         emitStatus();
 
     }
 
     function split(uint _tokenId, uint[] calldata _splitWeights) external returns ( uint[] memory _tokenIds) {
+        
+        require( !isRestrictedToken(_tokenId),  "This token is restricted, you can't unstake/transfer/split");
+
         _tokenIds = _split( _tokenId, _splitWeights);
         emitStatus();
 
     }
 
     function merge(uint _tokenFrom, uint tokenTo) external {
+
+        require( restrictedToken[_tokenFrom] == restrictedToken[tokenTo],  "You can't merge tokens with different types.");
+
         _merge(_tokenFrom, tokenTo);
         emitStatus();
 
     }
 
     function add(uint _intxAmount, uint tokenTo) external {
+
+        require( !isRestrictedToken(tokenTo),  "This token is restricted, you can't add intx to it, create a new position instead.");
+
         uint _tokenFrom = _stake( _msgSender(), _msgSender(), _intxAmount );
         _merge(_tokenFrom, tokenTo);
         emitStatus();
@@ -316,6 +337,8 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     }
 
     function unstakePartially(uint _tokenId, uint _xIntxAmountWithdraw) external returns(uint _intxAmountOut, uint _newTokenId) {
+
+        require( !isRestrictedToken(_tokenId),  "This token is restricted, you can't unstake/transfer/split");
 
         uint _balance = balanceOfId[_tokenId];
         require(_balance > _xIntxAmountWithdraw, "You can't partially withdraw more than you own");
@@ -381,19 +404,21 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         uint _intxAmountPenalization = (_intxAmount * _penaltyPercentageOf(_tokenId)) / P;
         _intxAmountOut = (_intxAmount - _intxAmountPenalization);
 
+        if ( _rewards[_tokenId] > 0 ) {
+            pendingRewards[_owner] += _rewards[_tokenId];
+        }
+
         delete loyalSince[_tokenId];
         delete balanceOfId[_tokenId];
         delete _lastWeightOfTokenId[_tokenId];
         delete _rewardPerWeightPaid[_tokenId];
-        if ( _rewards[_tokenId] > 0 ) {
-            pendingRewards[_owner] += _rewards[_tokenId];
-        }
         delete _rewards[_tokenId];
         _burn( _tokenId );
 
 
         totalXINTX -= _amount;
         totalWeight -= _weight;
+
         INTX.safeTransfer( _owner, _intxAmountOut);
 
         emit Burn (_owner, _tokenId, _amount,  _intxAmountOut, _intxAmountPenalization, totalXINTX);
@@ -534,12 +559,12 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
 
-        uint balance = rewardToken.balanceOf(address(this)) * P;
+        uint balance = rewardToken.balanceOf(address(this));
         require(rewardRate <= balance / DURATION, "Provided reward too high");
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + DURATION;
-        emit RewardAdded(_rewardAmount/P);
+        emit RewardAdded(_rewardAmount);
         emitStatus();
 
     }
@@ -641,10 +666,25 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         emitStatus();
 
     }
+    
+    function isRestrictedToken( uint _tokenId ) public view returns (bool isRestricted) {
+        isRestricted = false;
+        if (restrictedToken[_tokenId] == 1) {
+            if ( block.timestamp < 1716976800 + (60*60*24*365) ) {  // 1 year after vesting unlock
+                isRestricted = true;
+            }
+        }
+    }
 
-    function renounceOwnership() public virtual override onlyOwner {}
-    function _approve(address to, uint256 tokenId) internal virtual override {}
-    function _setApprovalForAll(address owner, address operator, bool approved) internal virtual override {}
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {}
+    function setTeamVestingContract (address _teamVestingContract) external onlyOwner {
+        require ( teamVestingContract == address(0), "Team vesting contract is already initialized." );
+        teamVestingContract = _teamVestingContract;
+    }
+
+    function renounceOwnership() public override onlyOwner {}
+    function _transfer(address from, address to, uint256 tokenId) internal override {
+        require( !isRestrictedToken(tokenId),  "This token is restricted, you can't unstake/transfer/merge/split");
+        super._transfer(from, to, tokenId);
+    }
 
 }
