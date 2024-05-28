@@ -60,7 +60,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     event Merge (address indexed owner, uint indexed tokenIdFrom, uint tokenIdTo, uint newBalance, uint newLoyalSince);
     event RewardAdded (uint rewardAdded);
     event Claim( address indexed owner, uint amountOut, uint[] indexed tokenIds);
-    event statusEvent( uint intxBalance, uint totalXINTX, uint totalWeight);
+    event StatusEvent( uint intxBalance, uint totalXINTX, uint totalWeight);
 
     struct PositionInfo {
         uint tokenId;
@@ -469,13 +469,14 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
             emit Split(_owner, _tokenId, lastTokenId, splitAmount);
         }
 
+        if ( _rewards[_tokenId] > 0 ) {
+            pendingRewards[_owner] += _rewards[_tokenId];
+        }
+
         delete loyalSince[_tokenId];
         delete balanceOfId[_tokenId];
         delete _lastWeightOfTokenId[_tokenId];
         delete _rewardPerWeightPaid[_tokenId];
-        if ( _rewards[_tokenId] > 0 ) {
-            pendingRewards[_owner] += _rewards[_tokenId];
-        }
         delete _rewards[_tokenId];
         _burn( _tokenId );
 
@@ -510,14 +511,14 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         uint _newWeight = _balanceNew * _boostPercentageOf(_tokenTo) / P;
         _lastWeightOfTokenId[_tokenTo] = _newWeight;
 
+        if ( _rewards[_tokenFrom] > 0 ) {
+            pendingRewards[_owner] += _rewards[_tokenFrom];
+        }
 
         delete loyalSince[_tokenFrom];
         delete balanceOfId[_tokenFrom];
         delete _lastWeightOfTokenId[_tokenFrom];
         delete _rewardPerWeightPaid[_tokenFrom];
-        if ( _rewards[_tokenFrom] > 0 ) {
-            pendingRewards[_owner] += _rewards[_tokenFrom];
-        }
         delete _rewards[_tokenFrom];
         _burn( _tokenFrom );
 
@@ -526,7 +527,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     }
 
     function emitStatus() internal {
-        emit statusEvent( _getCurrentIntxBalance(), totalXINTX, totalWeight);
+        emit StatusEvent( _getCurrentIntxBalance(), totalXINTX, totalWeight);
     }
 
     /* -----------------------------------------------------------------------------
