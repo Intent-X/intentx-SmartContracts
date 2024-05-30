@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IStakedINTX",
-  "sourceName": "contracts/VestingXINTX.sol",
+  "sourceName": "contracts/vestings/VestingXINTX.sol",
   "abi": [
     {
       "inputs": [
