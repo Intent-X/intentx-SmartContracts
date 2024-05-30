@@ -17,12 +17,11 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
     using SafeERC20 for IERC20;
 
-    uint public FIRST_CLAIM_TS;
-    
     IERC20 public intx;
     IStakedINTX public xIntx;
     
     mapping(address => uint) public claimableAmount;
+    mapping(address => uint) public claimedAmount;
     
     event Claimed(address indexed user, uint amount, uint _tokenId);
     event Seeded( address operator, address[] users, uint[] amount,  uint totalAmount);
@@ -31,8 +30,7 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
     function initialize(
             address _intx,
-            address _xIntx,
-            uint _firstClaimTs
+            address _xIntx
         ) public initializer {
         
         __ReentrancyGuard_init();
@@ -43,8 +41,6 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
         intx = IERC20(_intx);
         xIntx = IStakedINTX(_xIntx);
-
-        FIRST_CLAIM_TS = _firstClaimTs;
 
     }
 
@@ -67,16 +63,15 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     function claim() public nonReentrant {
         require( claimableAmount[_msgSender()] != 0,"This address doesn't have any amount to claim.");
 
-        uint toClaim = 0;
-        if ( FIRST_CLAIM_TS < block.timestamp ) {
-            toClaim = claimableAmount[ _msgSender() ];
-        }
+        uint allocation = claimableAmount[ _msgSender() ];
+
+        uint toClaim = allocation - claimedAmount[ _msgSender() ];
 
         if ( toClaim > 0) {
+            claimedAmount[ _msgSender() ] += toClaim;
+
             intx.approve(address(xIntx), toClaim);
             uint _tokenId = xIntx.stakeFor(_msgSender(), toClaim);
-            
-            delete claimableAmount[ _msgSender() ];
 
             emit Claimed( _msgSender(), toClaim, _tokenId);
         }
@@ -84,10 +79,11 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     }
 
 
-    function claimableNow( address _user) public view returns (uint amountToReceive) {
-        if ( FIRST_CLAIM_TS < block.timestamp ) {
-            amountToReceive = claimableAmount[ _user ];
-        }
+    function claimableNow( address _user) public view returns (uint toClaim) {
+
+        uint allocation = claimableAmount[ _user ];
+
+        toClaim = allocation - claimedAmount[ _user ];
     }
 
     function renounceOwnership() public virtual override onlyOwner {}
