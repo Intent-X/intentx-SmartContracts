@@ -74,8 +74,8 @@ module.exports = {
     mantle_mainnet: {
       url: 'https://mantle-rpc.publicnode.com',
       chainId : 5000,
-      accounts : INTENTXPRIVATEKEYTEST
-      //accounts : INTENTXPRIVATEKEY
+      //accounts : INTENTXPRIVATEKEYTEST
+      accounts : INTENTXPRIVATEKEY
     },
 
     /*hardhat: {

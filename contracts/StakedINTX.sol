@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,7 +18,7 @@ library Math {
     }
 }
 
-contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2StepUpgradeable {
+contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2StepUpgradeable, PausableUpgradeable {
 
     using SafeERC20 for IERC20;
 
@@ -81,22 +82,24 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         _disableInitializers();
     }
 
-    function initialize ( address _intx, address _usdc ) public initializer {
+    function initialize ( address _intx, address _usdt ) public initializer {
         __ReentrancyGuard_init();
         __ERC721_init( "Staked INTX", "XINTX" );
         __Ownable2Step_init();
+        __Pausable_init();
 
         require ( _intx != address(0), "Can't use 0x address");
-        require ( _usdc != address(0), "Can't use 0x address");
+        require ( _usdt != address(0), "Can't use 0x address");
 
         INTX = IERC20(_intx);
-        rewardToken = IERC20(_usdc);
+        rewardToken = IERC20(_usdt);
 
         loyaltyDuration = 16 weeks;         // 16 weeks
         maxLoyaltyBoost = 25 * 1e17;        // 2.5x
         maxPenalty = 25 * 1e16;             // 25%
         minPenalty = 1 * 1e16;              // 1%
 
+        _pause();
     }
 
     /* -----------------------------------------------------------------------------
@@ -389,7 +392,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
     }
 
-    function _unstake( uint _tokenId ) internal nonReentrant returns( uint _intxAmountOut) {
+    function _unstake( uint _tokenId ) internal nonReentrant whenNotPaused returns( uint _intxAmountOut) {
         require(_exists(_tokenId), "This position doesn't exist.");
         address _owner = _ownerOf(_tokenId);
         require(_owner == _msgSender(), "Not your xINTX NFT.");
@@ -681,9 +684,14 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
         //require ( teamVestingContract == address(0), "Team vesting contract is already initialized." );
         teamVestingContract = _teamVestingContract;
     }
+    
+    //this function, and pause and unpause functions are only used to avoid people having liquid intx before we provide liquidity.
+    function unpause() onlyOwner whenPaused external {
+        _unpause();
+    }
 
     function renounceOwnership() public override onlyOwner {}
-    function _transfer(address from, address to, uint256 tokenId) internal override {
+    function _transfer(address from, address to, uint256 tokenId) whenNotPaused internal override {
         require( !isRestrictedToken(tokenId),  "This token is restricted, you can't unstake/transfer/merge/split");
         super._transfer(from, to, tokenId);
     }

@@ -17,17 +17,12 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
     using SafeERC20 for IERC20;
 
-    uint constant public PRECISION = 100000;
-    uint public FIRST_CLAIM_AMOUNT;
-    uint public SECOND_CLAIM_AMOUNT;
     uint public FIRST_CLAIM_TS;
-    uint public SECOND_CLAIM_TS;
     
     IERC20 public intx;
     IStakedINTX public xIntx;
     
     mapping(address => uint) public claimableAmount;
-    mapping(address => uint) public claimedAmount;
     
     event Claimed(address indexed user, uint amount, uint _tokenId);
     event Seeded( address operator, address[] users, uint[] amount,  uint totalAmount);
@@ -37,9 +32,7 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     function initialize(
             address _intx,
             address _xIntx,
-            uint _firstClaimTs,
-            uint _secondClaimTs,
-            uint _firstClaimAmount
+            uint _firstClaimTs
         ) public initializer {
         
         __ReentrancyGuard_init();
@@ -52,10 +45,6 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
         xIntx = IStakedINTX(_xIntx);
 
         FIRST_CLAIM_TS = _firstClaimTs;
-        SECOND_CLAIM_TS = _secondClaimTs;
-
-        FIRST_CLAIM_AMOUNT = _firstClaimAmount;
-        SECOND_CLAIM_AMOUNT = PRECISION-FIRST_CLAIM_AMOUNT;
 
     }
 
@@ -77,41 +66,28 @@ contract ICOClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
     function claim() public nonReentrant {
         require( claimableAmount[_msgSender()] != 0,"This address doesn't have any amount to claim.");
-        require( claimedAmount[_msgSender()] < claimableAmount[_msgSender()], "You have already claimed all your allocation" );
 
         uint toClaim = 0;
         if ( FIRST_CLAIM_TS < block.timestamp ) {
-            toClaim += claimableAmount[ _msgSender() ] * FIRST_CLAIM_AMOUNT / PRECISION;
+            toClaim = claimableAmount[ _msgSender() ];
         }
 
-        if ( SECOND_CLAIM_TS < block.timestamp ) {
-            toClaim += claimableAmount[ _msgSender() ] * SECOND_CLAIM_AMOUNT / PRECISION;
-        }
-
-        uint amountToReceive = toClaim - claimedAmount[_msgSender()];
-
-        if ( amountToReceive > 0) {
-            claimedAmount[_msgSender()] += amountToReceive;
-            intx.approve(address(xIntx), amountToReceive);
-            uint _tokenId = xIntx.stakeFor(_msgSender(), amountToReceive);
+        if ( toClaim > 0) {
+            intx.approve(address(xIntx), toClaim);
+            uint _tokenId = xIntx.stakeFor(_msgSender(), toClaim);
             
-            emit Claimed( _msgSender(), amountToReceive, _tokenId);
+            delete claimableAmount[ _msgSender() ];
+
+            emit Claimed( _msgSender(), toClaim, _tokenId);
         }
         
     }
 
 
     function claimableNow( address _user) public view returns (uint amountToReceive) {
-        uint toClaim = 0;
         if ( FIRST_CLAIM_TS < block.timestamp ) {
-            toClaim += claimableAmount[ _user ] * FIRST_CLAIM_AMOUNT / PRECISION;
+            amountToReceive = claimableAmount[ _user ];
         }
-
-        if ( SECOND_CLAIM_TS < block.timestamp ) {
-            toClaim += claimableAmount[ _user ] * SECOND_CLAIM_AMOUNT / PRECISION;
-        }
-        
-        amountToReceive = toClaim - claimedAmount[_user];
     }
 
     function renounceOwnership() public virtual override onlyOwner {}
