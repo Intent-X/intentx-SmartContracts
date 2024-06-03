@@ -111,6 +111,7 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
             if ( amountToReceive > 0) {
                 claimedAmount[_msgSender()] += amountToReceive;
+                intx.approve(address(xIntx), amountToReceive);
                 uint _tokenId = xIntx.stakeFor(_msgSender(), amountToReceive);
                 emit Claimed( _msgSender(), amountToReceive, _tokenId);
             }
