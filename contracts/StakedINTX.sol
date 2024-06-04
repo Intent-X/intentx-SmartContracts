@@ -62,6 +62,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     event RewardAdded (uint rewardAdded);
     event Claim( address indexed owner, uint amountOut, uint[] indexed tokenIds);
     event StatusEvent( uint intxBalance, uint totalXINTX, uint totalWeight);
+    event AddToBackingRatio( uint intxAdded, uint oldExchangeRate, uint newExchangeRate);
 
     struct PositionInfo {
         uint tokenId;
@@ -357,6 +358,15 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
 
         emitStatus();
 
+    }
+
+    function addToBackingRatio( uint _intxAmount ) external {
+        _updateReward(0);
+        uint _oldExchangeRate = _exchangeRateInternal();
+        INTX.safeTransferFrom( _msgSender(), address(this), _intxAmount);
+
+        emit AddToBackingRatio( _intxAmount, _oldExchangeRate, _exchangeRateInternal());
+        emitStatus();
     }
 
     /* -----------------------------------------------------------------------------
@@ -689,6 +699,7 @@ contract StakedINTX is ReentrancyGuardUpgradeable, ERC721Upgradeable, Ownable2St
     function unpause() onlyOwner whenPaused external {
         _unpause();
     }
+
 
     function renounceOwnership() public override onlyOwner {}
     function _transfer(address from, address to, uint256 tokenId) whenNotPaused internal override {
