@@ -23,6 +23,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@openzeppelin/cli": "^2.8.2",
     "@tenderly/hardhat-tenderly": "^2.2.2",
-    "csv": "^6.3.9"
+    "csv": "^6.3.9",
+    "fast-csv": "^5.0.1"
   }
 }

@@ -31,7 +31,8 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
     event Seeded( address operator, address[] users, uint[] amount,  uint totalAmount);
     event AllocationChanged( address changedBy, address indexed _oldAddress, address indexed _newAddress, uint amountClaimable, uint amountClaimed);
     event Claimed(address indexed user, uint amount, uint _tokenId);
-
+    event RemoveSeed( address operator, address[] users, uint[] amount);
+    
     constructor () { _disableInitializers(); }
 
     function initialize(
@@ -70,6 +71,22 @@ contract VestingXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgradeable {
 
         intx.safeTransferFrom(_msgSender(), address(this), _amountNeeded);
         emit Seeded( _msgSender(), _receivers, _amounts, _amountNeeded );
+    }
+
+
+    function removeAllocations ( address[] calldata _receivers, uint[] calldata _amounts) external onlyOwner {
+        uint _amountToGive = 0;
+        uint _len = _receivers.length;
+        require(_len == _amounts.length);
+
+        for (uint i = 0; i < _len; i++) {
+            claimableAmount[_receivers[i]] -= _amounts[i];
+            _amountToGive += _amounts[i];
+        }
+
+
+        intx.safeTransfer(_msgSender(), _amountToGive);
+        emit RemoveSeed( _msgSender(), _receivers, _amounts );
     }
 
 

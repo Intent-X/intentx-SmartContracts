@@ -6,7 +6,7 @@ require("@openzeppelin/hardhat-upgrades");
 //tdly = require("@tenderly/hardhat-tenderly");
 //tdly.setup();
 
-const { INTENTXPRIVATEKEY, INTENTXPRIVATEKEYTEST, APIKEY} = require("./pvkey.js");
+const { INTENTXPRIVATEKEY, INTENTXPRIVATEKEYTEST, INTENTXAUTOPRIVATEKEY, APIKEY} = require("./pvkey.js");
 
 module.exports = {
   solidity: {
@@ -56,26 +56,26 @@ module.exports = {
     base_mainnet: {
       url: 'https://mainnet.base.org',
       chainId : 8453,
-      accounts : INTENTXPRIVATEKEY
+      accounts : [INTENTXPRIVATEKEY]
     },
 
     blast_mainnet: {
       url: 'https://blast.blockpi.network/v1/rpc/public',
       chainId : 81457,
-      accounts : INTENTXPRIVATEKEY
+      accounts : [INTENTXPRIVATEKEY]
     },
 
     bsc_mainnet: {
       url: 'https://bsc-dataseed1.defibit.io',
       chainId : 56,
-      accounts : INTENTXPRIVATEKEY
+      accounts : [INTENTXPRIVATEKEY]
     },
 
     mantle_mainnet: {
-      url: 'https://mantle-rpc.publicnode.com',
+      url: 'https://rpc.mantle.xyz',
       chainId : 5000,
       //accounts : INTENTXPRIVATEKEYTEST
-      accounts : INTENTXPRIVATEKEY
+      accounts : [INTENTXPRIVATEKEY, INTENTXAUTOPRIVATEKEY]
     },
 
     /*hardhat: {
