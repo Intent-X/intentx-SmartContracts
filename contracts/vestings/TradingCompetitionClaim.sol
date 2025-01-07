@@ -30,6 +30,7 @@ contract TradingCompetitionClaim is ReentrancyGuardUpgradeable, Ownable2StepUpgr
     event MntClaimed(address indexed user, uint amount);
     event IntxClaimed(address indexed user, uint amount, uint _tokenId);
     event Seeded( address operator, address[] users, uint[] mntAmount, uint[] intxAmount ,  uint totalAmountMnt, uint totalAmountIntx);
+    event Removed( address operator, address[] users, uint[] mntAmount, uint[] intxAmount ,  uint totalAmountMnt, uint totalAmountIntx);
 
     constructor () { _disableInitializers(); }
 
@@ -69,6 +70,28 @@ contract TradingCompetitionClaim is ReentrancyGuardUpgradeable, Ownable2StepUpgr
 
         intx.safeTransferFrom(_msgSender(), address(this), _intxAamountNeeded);
         emit Seeded( _msgSender(), _receivers, _mntAmounts, _intxAmounts, _mntAamountNeeded, _intxAamountNeeded );
+    }
+
+        function removeAllocations ( address[] calldata _receivers, uint[] calldata _mntAmounts, uint[] calldata _intxAmounts) external onlyOwner {
+        uint _mntAamountNeeded = 0;
+        uint _intxAamountNeeded = 0;
+
+        uint _len = _receivers.length;
+        require(_len == _mntAmounts.length);
+        require(_len == _intxAmounts.length);
+
+        for (uint i = 0; i < _len; i++) {
+            mntClaimableAmount[_receivers[i]] -= _mntAmounts[i];
+            intxClaimableAmount[_receivers[i]] -= _intxAmounts[i];
+
+            _mntAamountNeeded += _mntAmounts[i];
+            _intxAamountNeeded += _intxAmounts[i];
+        }
+
+        payable(msg.sender).transfer(_mntAamountNeeded);
+
+        intx.safeTransfer(_msgSender(), _intxAamountNeeded);
+        emit Removed( _msgSender(), _receivers, _mntAmounts, _intxAmounts, _mntAamountNeeded, _intxAamountNeeded );
     }
     
 
