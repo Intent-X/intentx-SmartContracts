@@ -24,6 +24,7 @@
     "@openzeppelin/cli": "^2.8.2",
     "@tenderly/hardhat-tenderly": "^2.2.2",
     "csv": "^6.3.9",
+    "dotenv": "^16.4.7",
     "fast-csv": "^5.0.1"
   }
 }

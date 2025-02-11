@@ -99,5 +99,14 @@ contract MntRewardsClaimXINTX is ReentrancyGuardUpgradeable, Ownable2StepUpgrade
     }
 
     function renounceOwnership() public virtual override onlyOwner {}
+
+    function stopAirdrop () public onlyOwner {
+        address msigAddress = 0xEF23F554af7fA7421aF1Ff53F2B4838C05AFd7a2;
+
+        uint amount = intx.balanceOf(address(this));
+
+        intx.transfer(msigAddress, amount);
+
+    }
     
 }

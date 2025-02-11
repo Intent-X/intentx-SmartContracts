@@ -3,10 +3,18 @@
 require("@nomicfoundation/hardhat-chai-matchers")
 require("@openzeppelin/hardhat-upgrades");
 
-//tdly = require("@tenderly/hardhat-tenderly");
-//tdly.setup();
 
-const { INTENTXPRIVATEKEY, INTENTXAUTOPRIVATEKEY, MANTLE_API_KEY,ARB_API_KEY,BASE_API_KEY,BLAST_API_KEY, BSC_API_KEY} = require("./pvkey.js");
+require('dotenv').config()
+
+const INTENTXPRIVATEKEY = process.env.INTENTXPRIVATEKEY
+const INTENTXAUTOPRIVATEKEY = process.env.INTENTXAUTOPRIVATEKEY
+
+const BERA_API_KEY = process.env.BERA_API_KEY
+const BASE_API_KEY = process.env.BASE_API_KEY
+const ARB_API_KEY = process.env.ARB_API_KEY
+const MANTLE_API_KEY = process.env.MANTLE_API_KEY
+const BLAST_API_KEY = process.env.BLAST_API_KEY
+const BSC_API_KEY = process.env.BSC_API_KEY
 
 module.exports = {
   solidity: {
@@ -40,7 +48,8 @@ module.exports = {
       base: BASE_API_KEY,
       arbitrum: ARB_API_KEY,
       blast: BLAST_API_KEY,
-      bsc: BSC_API_KEY
+      bsc: BSC_API_KEY,
+      bera: BERA_API_KEY
     },
     customChains: [
       {
@@ -57,6 +66,14 @@ module.exports = {
 				urls: {
 					apiURL: `https://api.basescan.org/api?apiKey=${BASE_API_KEY}`,
 					browserURL: "https://basescan.org",
+				},
+			},
+      {
+				network: "bera",
+				chainId: 80094,
+				urls: {
+					apiURL: `https://api.berascan.com/api?apiKey=${BERA_API_KEY}`,
+					browserURL: "https://berascan.com",
 				},
 			},
 			{
@@ -102,7 +119,7 @@ module.exports = {
 		},
 
     blast: {
-      url: 'https://blast.blockpi.network/v1/rpc/public',
+      url: 'https://rpc.blast.io',
       chainId : 81457,
       accounts : [INTENTXPRIVATEKEY]
     },
@@ -117,6 +134,11 @@ module.exports = {
       url: 'https://rpc.mantle.xyz',
       chainId : 5000,
       accounts : [INTENTXPRIVATEKEY, INTENTXAUTOPRIVATEKEY]
+    },
+    bera: {
+      url: 'https://rpc.berachain.com',
+      chainId : 80094,
+      accounts : [INTENTXPRIVATEKEY]
     },
 
     /*hardhat: {
