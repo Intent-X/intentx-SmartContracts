@@ -268,6 +268,16 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 		innerCall(account, _callData);
 	}
 
+	function withdrawFromAccountTo(address account, uint256 amount, address destination) external onlyOwner(account, msg.sender) whenNotPaused {
+
+		bytes memory _callData = abi.encodeWithSignature("withdrawTo(address,uint256)", destination, amount);
+
+		emit WithdrawFromAccount(msg.sender, account, amount);
+
+		innerCall(account, _callData);
+
+	}
+
 	function innerCall(address account, bytes memory _callData) internal {
 		(bool _success, bytes memory _resultData) = ISymmioPartyA(account)._call(_callData);
 		emit Call(msg.sender, account, _callData, _success, _resultData);
