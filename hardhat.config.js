@@ -9,6 +9,7 @@ require('dotenv').config()
 const INTENTXPRIVATEKEY = process.env.INTENTXPRIVATEKEY
 const INTENTXAUTOPRIVATEKEY = process.env.INTENTXAUTOPRIVATEKEY
 
+const API_ALCHEMY = process.env.API_ALCHEMY
 const BERA_API_KEY = process.env.BERA_API_KEY
 const BASE_API_KEY = process.env.BASE_API_KEY
 const ARB_API_KEY = process.env.ARB_API_KEY
@@ -103,15 +104,24 @@ module.exports = {
     ]
   },
 
-  defaultNetwork: "mantle",
+  defaultNetwork: "base",
   networks : {
-    
+    hardhat: {
+      forking: {
+        url: `https://mantle-mainnet.g.alchemy.com/v2/${API_ALCHEMY}`,
+        blockNumber: 77651539
+      }
+    },
     base: {
       url: 'https://mainnet.base.org',
       chainId : 8453,
       accounts : [INTENTXPRIVATEKEY]
     },
-
+    local: {
+      url: 'http://127.0.0.1:8545/',
+      chainId : 31337,
+      accounts : [INTENTXPRIVATEKEY]
+    },
     arbitrum: {
 			url: "https://1rpc.io/arb	",
       chainId : 42161,

@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IStakedINTX",
-  "sourceName": "contracts/APIHelper.sol",
+  "sourceName": "contracts/apis/APIHelper.sol",
   "abi": [
     {
       "inputs": [

@@ -244,7 +244,8 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	 * @param account The address of the account to deposit and allocate funds.
 	 * @param amount The amount of funds to deposit and allocate.
 	 */
-	function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
+	function depositAndAllocateForAccount(address account, uint256 amount) external whenNotPaused {
+	//function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
 		address collateral = ISymmio(symmioAddress).getCollateral();
 		IERC20Upgradeable(collateral).safeTransferFrom(msg.sender, address(this), amount);
 		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
