@@ -244,10 +244,23 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	 * @param account The address of the account to deposit and allocate funds.
 	 * @param amount The amount of funds to deposit and allocate.
 	 */
-	function depositAndAllocateForAccount(address account, uint256 amount) external whenNotPaused {
+	function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
 	//function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
 		address collateral = ISymmio(symmioAddress).getCollateral();
 		IERC20Upgradeable(collateral).safeTransferFrom(msg.sender, address(this), amount);
+		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
+		ISymmio(symmioAddress).depositFor(account, amount);
+		uint256 amountWith18Decimals = (amount * 1e18) / (10 ** IERC20Metadata(collateral).decimals());
+		bytes memory _callData = abi.encodeWithSignature("allocate(uint256)", amountWith18Decimals);
+		innerCall(account, _callData);
+		emit DepositForAccount(msg.sender, account, amount);
+		emit AllocateForAccount(msg.sender, account, amountWith18Decimals);
+	}
+
+	function depositAndAllocateForAccount(address account) external whenNotPaused {
+	//function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
+		address collateral = ISymmio(symmioAddress).getCollateral();
+		uint256 amount = IERC20Upgradeable(collateral).balanceOf(address(this));
 		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
 		ISymmio(symmioAddress).depositFor(account, amount);
 		uint256 amountWith18Decimals = (amount * 1e18) / (10 ** IERC20Metadata(collateral).decimals());
