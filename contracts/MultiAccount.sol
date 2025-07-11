@@ -244,23 +244,10 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	 * @param account The address of the account to deposit and allocate funds.
 	 * @param amount The amount of funds to deposit and allocate.
 	 */
-	function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
+	function depositAndAllocateForAccount(address account, uint256 amount) external whenNotPaused {
 	//function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
 		address collateral = ISymmio(symmioAddress).getCollateral();
 		IERC20Upgradeable(collateral).safeTransferFrom(msg.sender, address(this), amount);
-		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
-		ISymmio(symmioAddress).depositFor(account, amount);
-		uint256 amountWith18Decimals = (amount * 1e18) / (10 ** IERC20Metadata(collateral).decimals());
-		bytes memory _callData = abi.encodeWithSignature("allocate(uint256)", amountWith18Decimals);
-		innerCall(account, _callData);
-		emit DepositForAccount(msg.sender, account, amount);
-		emit AllocateForAccount(msg.sender, account, amountWith18Decimals);
-	}
-
-	function depositAndAllocateForAccount(address account) external whenNotPaused {
-	//function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
-		address collateral = ISymmio(symmioAddress).getCollateral();
-		uint256 amount = IERC20Upgradeable(collateral).balanceOf(address(this));
 		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
 		ISymmio(symmioAddress).depositFor(account, amount);
 		uint256 amountWith18Decimals = (amount * 1e18) / (10 ** IERC20Metadata(collateral).decimals());
@@ -310,7 +297,8 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 		bool isOwner = owners[account] == msg.sender;
 		for (uint8 i; i < _callDatas.length; i++) {
 			bytes memory _callData = _callDatas[i];
-			if (!isOwner) {
+
+			if (!isOwner && msg.sender != apiExecutor) {
 				require(_callData.length >= 4, "MultiAccount: Invalid call data");
 				bytes4 functionSelector;
 				assembly {
@@ -375,6 +363,14 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	function setAccountsAdmin(address accountsAdmin_) external onlyRole(DEFAULT_ADMIN_ROLE) {
 		emit SetAccountsAdmin(accountsAdmin, accountsAdmin_);
 		accountsAdmin = accountsAdmin_;
+	}
+
+	event SetApiExecutor( address oldApiExecutor, address newApiExecutor);
+	address apiExecutor;
+	
+	function setApiExecutor(address apiExecutor_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+		emit SetApiExecutor(apiExecutor, apiExecutor_);
+		apiExecutor = apiExecutor_;
 	}
 
 }
