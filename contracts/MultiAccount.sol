@@ -366,7 +366,7 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	}
 
 	event SetApiExecutor( address oldApiExecutor, address newApiExecutor);
-	address apiExecutor;
+	address public apiExecutor;
 	
 	function setApiExecutor(address apiExecutor_) external onlyRole(DEFAULT_ADMIN_ROLE) {
 		emit SetApiExecutor(apiExecutor, apiExecutor_);

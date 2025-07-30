@@ -7,13 +7,13 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract IntentXFeeRebate is OwnableUpgradeable {
+contract CarbonFeeRebate is OwnableUpgradeable {
     using ECDSA for bytes32;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // Constants and state variables
-    address public intentxTrustedAddress; // IntentX Trusted Address
-    uint public startTimestamp;
+    address public carbonTrustedAddress; // Carbon Trusted Address
+    address public rebateToken; // Carbon Trusted Address
     uint public totalReward;
 
     mapping(address => uint256) public claimed; // Mapping of user's claimed balance.
@@ -21,7 +21,7 @@ contract IntentXFeeRebate is OwnableUpgradeable {
     // Events
     event Reward(uint256 timestamp, uint256 amount);
     event Claim(address indexed user, uint256 timestamp, uint256 amount);
-    event SetIntentXTrustedAddress(address indexed intentxTrustedAddress);
+    event SetCarbonTrustedAddress(address indexed carbonTrustedAddress);
 
     // Errors
 
@@ -30,14 +30,15 @@ contract IntentXFeeRebate is OwnableUpgradeable {
 
     /// @notice Initialize the contract
     function initialize(
-        address _intentxTrustedAddress
+        address _carbonTrustedAddress,
+        address _rebateToken
     ) public initializer {
         __Ownable_init();
 
-        intentxTrustedAddress = _intentxTrustedAddress;
-        startTimestamp = block.timestamp;
+        carbonTrustedAddress = _carbonTrustedAddress;
+        rebateToken = _rebateToken;
 
-        emit SetIntentXTrustedAddress(_intentxTrustedAddress);
+        emit SetCarbonTrustedAddress(_carbonTrustedAddress);
     }
 
     function getClaimedBalances( address[] calldata addresses ) external view returns( uint[] memory claimedAmounts ) {
@@ -50,42 +51,40 @@ contract IntentXFeeRebate is OwnableUpgradeable {
     }
 
     /// @notice Set the reward token
-    /// @param _intentxTrustedAddress address of the new IntentX Trusted Backend
-    function setIntentxTrustedAddress(address _intentxTrustedAddress) external onlyOwner() {
-        intentxTrustedAddress = _intentxTrustedAddress;
-        emit SetIntentXTrustedAddress(_intentxTrustedAddress);
+    /// @param _carbonTrustedAddress address of the new Carbon Trusted Backend
+    function setCarbonTrustedAddress(address _carbonTrustedAddress) external onlyOwner() {
+        carbonTrustedAddress = _carbonTrustedAddress;
+        emit SetCarbonTrustedAddress(_carbonTrustedAddress);
     }
 
     /// @notice Fill reward for a given day from the token contract
     /// @param _amount amount of reward to fill
     function fill(uint256 _amount) external payable {
-        require(_amount == msg.value, "Not enough amount sent");
+        IERC20Upgradeable(rebateToken).transferFrom(msg.sender, address(this), _amount);
         totalReward += _amount;
         emit Reward(block.timestamp, _amount);
     }
 
     function claim(
-        address payable _user,
-        uint256 _amountMnt,
+        address _user,
+        uint256 _amountRebate,
         uint256 _timestamp,
         bytes memory signature
     ) external {
-        require(block.timestamp >= startTimestamp, "NOT STARTED");
         require( msg.sender == _user, "Not your claim");
-        require( intentxTrustedAddress != address(0), "IntentX Trusted Address not set yet.");
+        require( carbonTrustedAddress != address(0), "Carbon Trusted Address not set yet.");
 
-        if ( _amountMnt > claimed[msg.sender] ) {
+        if ( _amountRebate > claimed[msg.sender] ) {
             
-            bytes32 messageHash = getMessageHash( _user, _amountMnt, _timestamp);
+            bytes32 messageHash = getMessageHash( _user, _amountRebate, _timestamp);
             bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
 
-            require( recoverSigner(ethSignedMessageHash, signature) == intentxTrustedAddress, "Signer =! Trusted. ");
+            require( recoverSigner(ethSignedMessageHash, signature) == carbonTrustedAddress, "Signer =! Trusted. ");
             
-            uint256 withdrawableAmount = _amountMnt - claimed[msg.sender];
-            claimed[msg.sender] = _amountMnt;
+            uint256 withdrawableAmount = _amountRebate - claimed[msg.sender];
+            claimed[msg.sender] = _amountRebate;
 
-            bool success = _user.send(withdrawableAmount);
-            require(success, "Transfer failed");
+            IERC20Upgradeable(rebateToken).transfer(_user, withdrawableAmount);
 
             emit Claim(msg.sender, block.timestamp , withdrawableAmount);
         }
@@ -93,10 +92,10 @@ contract IntentXFeeRebate is OwnableUpgradeable {
 
     function getMessageHash(
         address _user,
-        uint _amountIntentX,
+        uint _amountCarbon,
         uint _timestamp
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_user, _amountIntentX, _timestamp));
+        return keccak256(abi.encodePacked(_user, _amountCarbon, _timestamp));
     }
 
     function getEthSignedMessageHash(bytes32 _messageHash)
