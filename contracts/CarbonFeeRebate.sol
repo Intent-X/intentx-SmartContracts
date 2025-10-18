@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity 0.8.18;
+pragma solidity >=0.8.18;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract CarbonFeeRebate is OwnableUpgradeable {
     using ECDSA for bytes32;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20 for IERC20;
 
     // Constants and state variables
     address public carbonTrustedAddress; // Carbon Trusted Address
@@ -33,7 +34,8 @@ contract CarbonFeeRebate is OwnableUpgradeable {
         address _carbonTrustedAddress,
         address _rebateToken
     ) public initializer {
-        __Ownable_init();
+        __Ownable_init(_msgSender());
+        
 
         carbonTrustedAddress = _carbonTrustedAddress;
         rebateToken = _rebateToken;
@@ -60,7 +62,7 @@ contract CarbonFeeRebate is OwnableUpgradeable {
     /// @notice Fill reward for a given day from the token contract
     /// @param _amount amount of reward to fill
     function fill(uint256 _amount) external payable {
-        IERC20Upgradeable(rebateToken).transferFrom(msg.sender, address(this), _amount);
+        IERC20(rebateToken).transferFrom(msg.sender, address(this), _amount);
         totalReward += _amount;
         emit Reward(block.timestamp, _amount);
     }
@@ -84,7 +86,7 @@ contract CarbonFeeRebate is OwnableUpgradeable {
             uint256 withdrawableAmount = _amountRebate - claimed[msg.sender];
             claimed[msg.sender] = _amountRebate;
 
-            IERC20Upgradeable(rebateToken).transfer(_user, withdrawableAmount);
+            IERC20(rebateToken).transfer(_user, withdrawableAmount);
 
             emit Claim(msg.sender, block.timestamp , withdrawableAmount);
         }

@@ -6,13 +6,5 @@ cache
 scripts
 
 contracts/apis/
-contracts/proxy/
-auto
-
-
-abis
-
-test
-.openzeppelin/.session
 
 .env

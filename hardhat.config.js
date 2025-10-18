@@ -1,7 +1,7 @@
 /** @type import('hardhat/config').HardhatUserConfig */
 
-require("@nomicfoundation/hardhat-chai-matchers")
 require("@openzeppelin/hardhat-upgrades");
+require("@nomicfoundation/hardhat-toolbox");
 
 
 require('dotenv').config()
@@ -9,13 +9,7 @@ require('dotenv').config()
 const INTENTXPRIVATEKEY = process.env.INTENTXPRIVATEKEY
 const INTENTXAUTOPRIVATEKEY = process.env.INTENTXAUTOPRIVATEKEY
 
-const API_ALCHEMY = process.env.API_ALCHEMY
-const BERA_API_KEY = process.env.BERA_API_KEY
-const BASE_API_KEY = process.env.BASE_API_KEY
-const ARB_API_KEY = process.env.ARB_API_KEY
-const MANTLE_API_KEY = process.env.MANTLE_API_KEY
-const BLAST_API_KEY = process.env.BLAST_API_KEY
-const BSC_API_KEY = process.env.BSC_API_KEY
+const ETH_API_KEY = process.env.ETH_API_KEY
 
 module.exports = {
   solidity: {
@@ -29,35 +23,33 @@ module.exports = {
           }
         }
       },
+      {
+        version: "0.8.28",
+        settings: {
+          optimizer: {
+            enabled : true,
+            runs: 2048,
+          }
+        }
+      },
     ]
-  },
-
-  tenderly: {
-    username: "intentxdev",
-    project: "intentxsmartcontracts",
- 
-    // Contract visible only in Tenderly.
-    // Omitting or setting to `false` makes it visible to the whole world.
-    // Alternatively, admin-rpc verification visibility using
-    // an environment variable `TENDERLY_PRIVATE_VERIFICATION`.
-    privateVerification: true,
   },
 
   etherscan: {
     apiKey: {
-      mantle: MANTLE_API_KEY,
-      base: BASE_API_KEY,
-      arbitrum: ARB_API_KEY,
-      blast: BLAST_API_KEY,
-      bsc: BSC_API_KEY,
-      bera: BERA_API_KEY
+      mantle: ETH_API_KEY,
+      base: ETH_API_KEY,
+      arbitrum: ETH_API_KEY,
+      blast: ETH_API_KEY,
+      bsc: ETH_API_KEY,
+      bera: ETH_API_KEY
     },
     customChains: [
       {
         network: "mantle",
         chainId: 5000,
         urls: {
-          apiURL: `https://api.mantlescan.xyz/api?apiKey=${MANTLE_API_KEY}`,
+          apiURL: `https://api.etherscan.io/v2/api?chainid=5000&apiKey=${ETH_API_KEY}`,
           browserURL: "https://mantlescan.xyz"
         }
       },
@@ -65,7 +57,7 @@ module.exports = {
 				network: "base",
 				chainId: 8453,
 				urls: {
-					apiURL: `https://api.basescan.org/api?apiKey=${BASE_API_KEY}`,
+					apiURL: `https://api.etherscan.io/v2/api?chainid=8453&apiKey=${ETH_API_KEY}`,
 					browserURL: "https://basescan.org",
 				},
 			},
@@ -73,7 +65,7 @@ module.exports = {
 				network: "bera",
 				chainId: 80094,
 				urls: {
-					apiURL: `https://api.berascan.com/api?apiKey=${BERA_API_KEY}`,
+					apiURL: `https://api.etherscan.io/v2/api?chainid=80094&apiKey=${ETH_API_KEY}`,
 					browserURL: "https://berascan.com",
 				},
 			},
@@ -81,7 +73,7 @@ module.exports = {
 				network: "arbitrum",
 				chainId: 42161,
 				urls: {
-					apiURL: `https://api.arbiscan.io/api?apiKey=${ARB_API_KEY}`,
+					apiURL: `https://api.etherscan.io/v2/api?chainid=42161&apiKey=${ETH_API_KEY}`,
 					browserURL: "https://arbiscan.io",
 				},
 			},
@@ -89,7 +81,7 @@ module.exports = {
 				network: "blast",
 				chainId: 81457,
 				urls: {
-					apiURL: `https://api.blastscan.io/api?apiKey=${BLAST_API_KEY}`,
+					apiURL: `https://api.etherscan.io/v2/api?chainid=81457&apiKey=${ETH_API_KEY}`,
 					browserURL: "https://blastscan.io",
 				},
 			},
@@ -97,7 +89,7 @@ module.exports = {
 				network: "bsc",
 				chainId: 56,
 				urls: {
-					apiURL: `https://api.bscscan.com/api?apikey=${BSC_API_KEY}`,
+					apiURL: `https://api.etherscan.io/v2/api?chainid=56&apiKey=${ETH_API_KEY}`,
 					browserURL: "https://bscscan.com",
 				},
 			}
@@ -106,20 +98,9 @@ module.exports = {
 
   defaultNetwork: "base",
   networks : {
-    hardhat: {
-      forking: {
-        url: `https://mantle-mainnet.g.alchemy.com/v2/${API_ALCHEMY}`,
-        blockNumber: 77651539
-      }
-    },
     base: {
       url: 'https://mainnet.base.org',
       chainId : 8453,
-      accounts : [INTENTXPRIVATEKEY]
-    },
-    local: {
-      url: 'http://127.0.0.1:8545/',
-      chainId : 31337,
       accounts : [INTENTXPRIVATEKEY]
     },
     arbitrum: {
@@ -150,13 +131,6 @@ module.exports = {
       chainId : 80094,
       accounts : [INTENTXPRIVATEKEY]
     },
-
-    /*hardhat: {
-      forking: {
-        url : 'https://mainnet.base.org',
-        chainId : 8453
-      }
-    },*/
   },
 
 };

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.18;
+pragma solidity >=0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 interface MultiAccount {
 
@@ -31,7 +31,8 @@ contract SymmExecutorUpgradeable is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function initialize( address _multiAccount ) public initializer {
-        __Ownable_init();
+        __Ownable_init(_msgSender());
+       
         __Pausable_init();
 
         multiAccount = MultiAccount(_multiAccount);

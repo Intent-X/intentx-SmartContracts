@@ -2,9 +2,42 @@
   "_format": "hh-sol-artifact-1",
   "contractName": "SafeERC20",
   "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
-  "abi": [],
-  "bytecode": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220f9b5f2d401a02f6cbcb42269418f3ba94b8f7456e0debe121ba995db1fbe30ae64736f6c63430008120033",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220f9b5f2d401a02f6cbcb42269418f3ba94b8f7456e0debe121ba995db1fbe30ae64736f6c63430008120033",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "currentAllowance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "requestedDecrease",
+          "type": "uint256"
+        }
+      ],
+      "name": "SafeERC20FailedDecreaseAllowance",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "SafeERC20FailedOperation",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212202222dc2f0f74762b72979e140017236f8d2ca00685b5dbb5d30f50ecab2b4b5b64736f6c634300081c0033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212202222dc2f0f74762b72979e140017236f8d2ca00685b5dbb5d30f50ecab2b4b5b64736f6c634300081c0033",
   "linkReferences": {},
   "deployedLinkReferences": {}
 }
