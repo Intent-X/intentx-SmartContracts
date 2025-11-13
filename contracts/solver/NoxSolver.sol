@@ -208,7 +208,7 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
 	 * @param state The state to set for the address.
 	 */
 	function setMulticastWhitelist(address addr, bool state) external onlyRole(MANAGER_ROLE) {
-		require(addr != address(this), "SymmioPartyB: Invalid address");
+		//require(addr != address(this), "SymmioPartyB: Invalid address");
 		multicastWhitelist[addr] = state;
 		emit SetMulticastWhitelist(addr, state);
 	}
