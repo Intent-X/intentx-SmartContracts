@@ -15,7 +15,7 @@ contract TestToken is ERC20BurnableUpgradeable, ERC20PermitUpgradeable, OwnableU
     function initialize() public initializer {
         __ERC20_init("Test Token", "TEST");
         __ERC20Permit_init("Test_token");
-        __Ownable_init(_msgSender());
+        __Ownable_init();
         
         _mint( _msgSender(), 100_000 * 10**decimals());
     }

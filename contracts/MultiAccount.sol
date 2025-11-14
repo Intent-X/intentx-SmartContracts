@@ -4,18 +4,18 @@
 // For more information, see https://docs.symm.io/legal-disclaimer/license
 pragma solidity >=0.8.18;
 
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/ISymmio.sol";
 import "./interfaces/ISymmioPartyA.sol";
 import "./interfaces/IMultiAccount.sol";
 
 contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, AccessControlUpgradeable {
-	using SafeERC20 for IERC20;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
 	bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -233,8 +233,8 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	 */
 	function depositForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
 		address collateral = ISymmio(symmioAddress).getCollateral();
-		IERC20(collateral).safeTransferFrom(msg.sender, address(this), amount);
-		IERC20(collateral).safeIncreaseAllowance(symmioAddress, amount);
+		IERC20Upgradeable(collateral).safeTransferFrom(msg.sender, address(this), amount);
+		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
 		ISymmio(symmioAddress).depositFor(account, amount);
 		emit DepositForAccount(msg.sender, account, amount);
 	}
@@ -247,8 +247,8 @@ contract MultiAccount is IMultiAccount, Initializable, PausableUpgradeable, Acce
 	function depositAndAllocateForAccount(address account, uint256 amount) external whenNotPaused {
 	//function depositAndAllocateForAccount(address account, uint256 amount) external onlyOwner(account, msg.sender) whenNotPaused {
 		address collateral = ISymmio(symmioAddress).getCollateral();
-		IERC20(collateral).safeTransferFrom(msg.sender, address(this), amount);
-		IERC20(collateral).safeIncreaseAllowance(symmioAddress, amount);
+		IERC20Upgradeable(collateral).safeTransferFrom(msg.sender, address(this), amount);
+		IERC20Upgradeable(collateral).safeApprove(symmioAddress, amount);
 		ISymmio(symmioAddress).depositFor(account, amount);
 		uint256 amountWith18Decimals = (amount * 1e18) / (10 ** IERC20Metadata(collateral).decimals());
 		bytes memory _callData = abi.encodeWithSignature("allocate(uint256)", amountWith18Decimals);

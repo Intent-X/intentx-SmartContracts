@@ -7,16 +7,14 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./ISymmioPartyA.sol";
 import "./ISymmioDiamond.sol";
 import "./library/MuonStorage.sol";
 // ATTENTION: ONLY APPEND GLOBAL VARIABLES UPON UPGRADE
 
 contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
-    using SafeERC20 for IERC20;
 
     address public symmioAddress;
     address private withdrawalAddress;
@@ -155,7 +153,7 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
 	 * @param amount The amount of tokens to approve.
 	 */
 	function _approve(address token, uint256 amount) external onlyRole(TRUSTED_ROLE) whenNotPaused {
-		require(IERC20(token).approve(symmioAddress, amount), "SymmioPartyB: Not approved");
+		require(IERC20Upgradeable(token).approve(symmioAddress, amount), "SymmioPartyB: Not approved");
 	}
 
 	/**
@@ -166,7 +164,7 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
 	 */
 	function withdrawERC20(address targetAddress, address token, uint256 amount) external onlyRole(MANAGER_ROLE) {
         require(targetAddress == withdrawalAddress || targetAddress == ledgerMultiSigWithdrawalAddress, "Invalid target withdrawal Address!");
-		require(IERC20(token).transfer(targetAddress, amount), "SymmioPartyB: Not transferred");
+		require(IERC20Upgradeable(token).transfer(targetAddress, amount), "SymmioPartyB: Not transferred");
 	}
 
 	/**

@@ -19,7 +19,7 @@ contract TargetRebalancer is Ownable2Step {
   mapping(address => mapping(address => uint256)) public withdrawalRequests;
   mapping(address => bool) public allowedPartyBs;
 
-  constructor(address symmioAddress) Ownable(msg.sender) {
+  constructor(address symmioAddress) Ownable() {
     symmio = SymmCore(symmioAddress);
 
     allowedPartyBs[0x939cA7B7DE3BE50b537BFB59586C20Cbe724570b] = true;

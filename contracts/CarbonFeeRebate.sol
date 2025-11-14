@@ -34,7 +34,7 @@ contract CarbonFeeRebate is OwnableUpgradeable {
         address _carbonTrustedAddress,
         address _rebateToken
     ) public initializer {
-        __Ownable_init(_msgSender());
+        __Ownable_init();
         
 
         carbonTrustedAddress = _carbonTrustedAddress;
