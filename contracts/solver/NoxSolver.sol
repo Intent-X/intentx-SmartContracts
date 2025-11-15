@@ -38,11 +38,10 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
 	 * @dev Initializes the contract with the provided admins, withdrawal address and Symmio address.
 	 * @param admin The address of the admin / owner, only admin can upgrade contract.
 	 * @param managers The managers can call all contract functions, including withdrawing funds.
-	 * @param trusted The trusted addresses can call trading functionalities.
      * @param withdrawalAddress_ The address whitelisted for withdrawal of funds.
 	 * @param symmioAddress_ The address of the Symmio contract.
 	 */
-	function initialize(address admin, address[] memory managers, address[] memory trusted, address withdrawalAddress_, address ledgerMultiSigWithdrawalAddress_, address symmioAddress_) public initializer {
+	function initialize(address admin, address[] memory managers, address withdrawalAddress_, address ledgerMultiSigWithdrawalAddress_, address symmioAddress_) public initializer {
         __UUPSUpgradeable_init();
 		__Pausable_init();
 		__AccessControl_init();
@@ -58,9 +57,6 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
             _grantRole(MANAGER_ROLE, managers[i]);
         }
 
-		for (uint8 i; i < trusted.length; i++) {
-            _grantRole(TRUSTED_ROLE, trusted[i]);
-        }
 	}
 
 	/**
@@ -213,6 +209,14 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
 
 	function grantTrustedRole(address addr) external onlyRole(MANAGER_ROLE) {
 		_grantRole(TRUSTED_ROLE, addr);
+	}
+	
+	function grantManagerRole(address addr) external onlyRole(MANAGER_ROLE) {
+		_grantRole(MANAGER_ROLE, addr);
+	}
+
+	function grantExecutorRole(address addr) external onlyRole(MANAGER_ROLE) {
+		_grantRole(EXECUTOR_ROLE, addr);
 	}
 
     // Instant Action Wrappers
