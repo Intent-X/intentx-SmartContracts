@@ -17,7 +17,8 @@ interface IOnChainSymmioVault {
         Pending,
         Ready,
         Done,
-        Canceled
+        Canceled,
+        Rejected
     }
 
     event WithdrawalPeriodUpdate(uint256 withdrawalPeriod);
@@ -27,6 +28,7 @@ interface IOnChainSymmioVault {
         uint256 indexed requestId, address indexed sender, address indexed receiver, uint256 amount, uint256 nonce
     );
     event WithdrawRequestCanceled(uint256 indexed requestId);
+    event WithdrawRequestRejected(uint256 indexed requestId);
     event WithdrawRequestAcceptedEvent(uint256 providedAmount, uint256[] acceptedRequestIds, uint256 paybackRatio);
     event WithdrawClaimedEvent(uint256 indexed requestId, address indexed receiver);
     event SymmioAddressUpdatedEvent(address indexed newSymmioAddress);

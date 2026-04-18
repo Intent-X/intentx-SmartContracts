@@ -130,6 +130,20 @@ contract OnChainSymmioVaultV2 is
         emit WithdrawRequestCanceled(id);
     }
 
+
+    function rejectWithdrawRequest(uint256 id)
+        external
+        onlyRole(BALANCER_ROLE)
+        whenNotPaused
+    {
+        require(id < withdrawRequests.length, "SymmioSolverDepositor: Invalid request ID");
+        WithdrawRequest storage request = withdrawRequests[id];
+        require(request.status == RequestStatus.Pending, "SymmioSolverDepositor: Invalid status");
+        request.status = RequestStatus.Rejected;
+        pendingWithdrawalAmount[request.sender] -= request.amount;
+        emit WithdrawRequestRejected(id);
+    }
+
     function acceptWithdrawRequest(uint256 providedAmount, uint256[] memory _acceptedRequestIds, uint256 _paybackRatio)
         external
         onlyRole(BALANCER_ROLE)
