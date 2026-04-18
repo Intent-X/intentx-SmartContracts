@@ -163,6 +163,10 @@ contract NoxPartyB is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrade
 		require(IERC20Upgradeable(token).transfer(targetAddress, amount), "SymmioPartyB: Not transferred");
 	}
 
+	function changeWithdrawalAddress(address withdrawalAddress_) external onlyRole(MANAGER_ROLE) {
+		withdrawalAddress = withdrawalAddress_;
+	}
+
 	/**
 	 * @dev Pauses the contract.
 	 */

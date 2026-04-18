@@ -3,13 +3,17 @@
 require("@openzeppelin/hardhat-upgrades");
 require("@nomicfoundation/hardhat-toolbox");
 
+require("dotenv").config();
 
-require('dotenv').config()
+const {
+  DEPLOYER_PRIVATE_KEY,
+  ETHERSCAN_API_KEY,
 
-const INTENTXPRIVATEKEY = process.env.INTENTXPRIVATEKEY
-const INTENTXAUTOPRIVATEKEY = process.env.INTENTXAUTOPRIVATEKEY
+  ARBITRUM_ONE_RPC_URL,
+  MANTLE_RPC_URL,
+  BASE_RPC_URL,
+} = process.env;
 
-const ETH_API_KEY = process.env.ETH_API_KEY
 
 module.exports = {
   solidity: {
@@ -35,102 +39,58 @@ module.exports = {
     ]
   },
 
-  etherscan: {
-    apiKey: {
-      mantle: ETH_API_KEY,
-      base: ETH_API_KEY,
-      arbitrum: ETH_API_KEY,
-      blast: ETH_API_KEY,
-      bsc: ETH_API_KEY,
-      bera: ETH_API_KEY
+  sourcify: {
+    enabled: false
+  },
+
+  networks: {
+    arbitrumOne: {
+      url:
+        ARBITRUM_ONE_RPC_URL || "",
+      chainId: 42161,
+      accounts: [DEPLOYER_PRIVATE_KEY],
     },
+    mantle: {
+      url:
+        MANTLE_RPC_URL || "",
+      chainId: 5000,
+      accounts: [DEPLOYER_PRIVATE_KEY],
+    },
+    base: {
+      url:
+        BASE_RPC_URL || "",
+      chainId: 8453,
+      accounts: [DEPLOYER_PRIVATE_KEY],
+    },
+  },
+
+  defaultNetwork: "arbitrumOne",
+
+  verify: {
+    etherscan: {
+      apiKey: ETHERSCAN_API_KEY || "",
+    },
+  },
+  
+  etherscan: {
+    apiKey: ETHERSCAN_API_KEY || "",
     customChains: [
       {
-        network: "mantle",
-        chainId: 5000,
+        network: "arbitrumOne",
+        chainId: 42161,
         urls: {
-          apiURL: `https://api.etherscan.io/v2/api?chainid=5000&apiKey=${ETH_API_KEY}`,
-          browserURL: "https://mantlescan.xyz"
-        }
+          apiURL: "https://api.etherscan.io/v2/api?chainid=42161",
+          browserURL: "https://arbiscan.io",
+        },
       },
       {
-				network: "base",
-				chainId: 8453,
-				urls: {
-					apiURL: `https://api.etherscan.io/v2/api?chainid=8453&apiKey=${ETH_API_KEY}`,
-					browserURL: "https://basescan.org",
-				},
-			},
-      {
-				network: "bera",
-				chainId: 80094,
-				urls: {
-					apiURL: `https://api.etherscan.io/v2/api?chainid=80094&apiKey=${ETH_API_KEY}`,
-					browserURL: "https://berascan.com",
-				},
-			},
-			{
-				network: "arbitrum",
-				chainId: 42161,
-				urls: {
-					apiURL: `https://api.etherscan.io/v2/api?chainid=42161&apiKey=${ETH_API_KEY}`,
-					browserURL: "https://arbiscan.io",
-				},
-			},
-      {
-				network: "blast",
-				chainId: 81457,
-				urls: {
-					apiURL: `https://api.etherscan.io/v2/api?chainid=81457&apiKey=${ETH_API_KEY}`,
-					browserURL: "https://blastscan.io",
-				},
-			},
-      {
-				network: "bsc",
-				chainId: 56,
-				urls: {
-					apiURL: `https://api.etherscan.io/v2/api?chainid=56&apiKey=${ETH_API_KEY}`,
-					browserURL: "https://bscscan.com",
-				},
-			}
-    ]
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainid=8453",
+          browserURL: "https://basescan.org",
+        },
+      },
+    ],
   },
-
-  defaultNetwork: "base",
-  networks : {
-    base: {
-      url: 'https://mainnet.base.org',
-      chainId : 8453,
-      accounts : [INTENTXPRIVATEKEY]
-    },
-    arbitrum: {
-			url: "https://1rpc.io/arb	",
-      chainId : 42161,
-			accounts: [INTENTXPRIVATEKEY],
-		},
-
-    blast: {
-      url: 'https://rpc.blast.io',
-      chainId : 81457,
-      accounts : [INTENTXPRIVATEKEY]
-    },
-
-    bsc: {
-      url: 'https://bsc-dataseed1.defibit.io',
-      chainId : 56,
-      accounts : [INTENTXPRIVATEKEY]
-    },
-
-    mantle: {
-      url: 'https://rpc.mantle.xyz',
-      chainId : 5000,
-      accounts : [INTENTXPRIVATEKEY, INTENTXAUTOPRIVATEKEY]
-    },
-    bera: {
-      url: 'https://rpc.berachain.com',
-      chainId : 80094,
-      accounts : [INTENTXPRIVATEKEY]
-    },
-  },
-
 };
