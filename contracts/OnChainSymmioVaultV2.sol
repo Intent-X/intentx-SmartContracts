@@ -40,7 +40,6 @@ contract OnChainSymmioVaultV2 is
     uint256 public lockedBalance;
     uint256 public minimumPaybackRatio;
     uint256 public depositLimit;
-    uint256 public depositPerUserLimit;
     uint256 public currentDeposit;
     uint256 public collateralTokenDecimals;
     WithdrawRequest[] public withdrawRequests;
@@ -58,8 +57,7 @@ contract OnChainSymmioVaultV2 is
         address _solver,
         address _signer,
         uint256 _minimumPaybackRatio,
-        uint256 _depositLimit,
-        uint256 _depositPerUserLimit
+        uint256 _depositLimit
     ) external initializer {
         __ReentrancyGuard_init();
         __AccessControl_init();
@@ -69,11 +67,11 @@ contract OnChainSymmioVaultV2 is
         _grantRole(SETTER_ROLE, _msgSender());
 
         setSymmioAddress(_symmioAddress);
-        setDepositLimit(_depositLimit, _depositPerUserLimit);
         setSolver(_solver);
+        setDepositLimit(_depositLimit);
         setSigner(_signer);
         setMinimumPaybackRatio(_minimumPaybackRatio);
-        _setWithdrawalPeriod(604800);
+        _setWithdrawalPeriod(100);
     }
 
     function deposit(uint256 amount) external whenNotPaused nonReentrant {
@@ -226,10 +224,9 @@ contract OnChainSymmioVaultV2 is
         emit SignerUpdatedEvent(_signer);
     }
 
-    function setDepositLimit(uint256 _depositLimit, uint256 _depositPerUserLimit) public onlyRole(SETTER_ROLE) {
+    function setDepositLimit(uint256 _depositLimit) public onlyRole(SETTER_ROLE) {
         depositLimit = _depositLimit;
-        depositPerUserLimit = _depositPerUserLimit;
-        emit DepositLimitUpdatedEvent(_depositLimit, _depositPerUserLimit);
+        emit DepositLimitUpdatedEvent(_depositLimit);
     }
 
     function setMinimumPaybackRatio(uint256 _minimumPaybackRatio) public onlyRole(SETTER_ROLE) {

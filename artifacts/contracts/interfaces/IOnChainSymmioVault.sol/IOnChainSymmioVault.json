@@ -30,12 +30,6 @@
           "internalType": "uint256",
           "name": "depositLimit",
           "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "depositPerUserLimit",
-          "type": "uint256"
         }
       ],
       "name": "DepositLimitUpdatedEvent",
