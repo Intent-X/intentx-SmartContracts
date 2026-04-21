@@ -39,12 +39,13 @@ contract SymmioPartyB is Initializable, PausableUpgradeable, AccessControlUpgrad
 	/// @notice Initializes the contract with the provided admin and Symmio address
 	/// @param admin The address of the default admin role
 	/// @param symmioAddress_ The address of the Symmio contract
-	function initialize(address admin, address symmioAddress_) public initializer {
+	function initialize(address admin, address multisig_, address symmioAddress_) public initializer {
 		__Pausable_init();
 		__AccessControl_init();
 		__UUPSUpgradeable_init();
 
 		_grantRole(DEFAULT_ADMIN_ROLE, admin);
+		_grantRole(DEFAULT_ADMIN_ROLE, multisig_);
 		_grantRole(TRUSTED_ROLE, admin);
 		_grantRole(MANAGER_ROLE, admin);
 		symmioAddress = symmioAddress_;
