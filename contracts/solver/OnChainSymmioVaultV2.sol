@@ -11,8 +11,8 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./interfaces/IOnChainSymmioVault.sol";
-import "./interfaces/ISymmio.sol";
+import "../interfaces/IOnChainSymmioVault.sol";
+import "../interfaces/ISymmio.sol";
 
 contract OnChainSymmioVaultV2 is
     IOnChainSymmioVault,
