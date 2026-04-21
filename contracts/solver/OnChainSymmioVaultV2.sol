@@ -38,7 +38,6 @@ contract OnChainSymmioVaultV2 is
     address public signer;
     address public collateralTokenAddress;
     uint256 public lockedBalance;
-    uint256 public minimumPaybackRatio;
     uint256 public depositLimit;
     uint256 public currentDeposit;
     uint256 public collateralTokenDecimals;
@@ -56,7 +55,6 @@ contract OnChainSymmioVaultV2 is
         address _symmioAddress,
         address _solver,
         address _signer,
-        uint256 _minimumPaybackRatio,
         uint256 _depositLimit
     ) external initializer {
         __ReentrancyGuard_init();
@@ -70,7 +68,6 @@ contract OnChainSymmioVaultV2 is
         setSolver(_solver);
         setDepositLimit(_depositLimit);
         setSigner(_signer);
-        setMinimumPaybackRatio(_minimumPaybackRatio);
         _setWithdrawalPeriod(100);
     }
 
@@ -111,7 +108,7 @@ contract OnChainSymmioVaultV2 is
                 amount: amount,
                 minAmountOut: minAmountOut,
                 status: RequestStatus.Pending,
-                acceptedRatio: 0,
+                acceptedAmount: 0,
                 acceptedWithdrawRequestTimestamp: 0,
                 claimableAt: 0
             })
@@ -144,14 +141,12 @@ contract OnChainSymmioVaultV2 is
         emit WithdrawRequestRejected(id);
     }
 
-    function acceptWithdrawRequest(uint256 providedAmount, uint256[] memory _acceptedRequestIds, uint256 _paybackRatio)
+    function acceptWithdrawRequest(uint256 providedAmount, uint256[] memory _acceptedRequestIds, uint256[] memory _acceptedAmounts)
         external
         onlyRole(BALANCER_ROLE)
         whenNotPaused
     {
         IERC20(collateralTokenAddress).safeTransferFrom(_msgSender(), address(this), providedAmount);
-        require(_paybackRatio >= minimumPaybackRatio, "SymmioSolverDepositor: Payback ratio is too low");
-        require(_paybackRatio <= 1e18, "SymmioSolverDepositor: Payback ratio is too high");
         uint256 totalRequiredBalance = lockedBalance;
 
         for (uint256 i = 0; i < _acceptedRequestIds.length; i++) {
@@ -160,7 +155,7 @@ contract OnChainSymmioVaultV2 is
             require(
                 withdrawRequests[id].status == RequestStatus.Pending, "SymmioSolverDepositor: Invalid accepted request"
             );
-            uint256 amountOut = (withdrawRequests[id].amount * _paybackRatio) / 1e18;
+            uint256 amountOut = _acceptedAmounts[i];
             require(
                 amountOut >= withdrawRequests[id].minAmountOut,
                 "SymmioSolverDepositor: Payback ratio is too low for this request"
@@ -168,7 +163,7 @@ contract OnChainSymmioVaultV2 is
             totalRequiredBalance += amountOut;
             currentDeposit -= withdrawRequests[id].amount;
             withdrawRequests[id].status = RequestStatus.Ready;
-            withdrawRequests[id].acceptedRatio = _paybackRatio;
+            withdrawRequests[id].acceptedAmount = amountOut;
             withdrawRequests[id].acceptedWithdrawRequestTimestamp = block.timestamp;
             withdrawRequests[id].claimableAt = block.timestamp + withdrawalPeriod;
             pendingWithdrawalAmount[withdrawRequests[id].sender] -= withdrawRequests[id].amount;
@@ -179,7 +174,7 @@ contract OnChainSymmioVaultV2 is
             "SymmioSolverDepositor: Insufficient contract balance"
         );
         lockedBalance = totalRequiredBalance;
-        emit WithdrawRequestAcceptedEvent(providedAmount, _acceptedRequestIds, _paybackRatio);
+        emit WithdrawRequestAcceptedEvent(providedAmount, _acceptedRequestIds, _acceptedAmounts);
     }
 
     function withdrawNotLockedCollateralTokens(address receiver, uint256 amount)
@@ -204,7 +199,7 @@ contract OnChainSymmioVaultV2 is
         require(request.claimableAt <= block.timestamp, "SymmioSolverDepositor: Request not pass withdrawal period");
 
         request.status = RequestStatus.Done;
-        uint256 amount = (request.amount * request.acceptedRatio) / 1e18;
+        uint256 amount = request.acceptedAmount;
         lockedBalance -= amount;
         IERC20(collateralTokenAddress).safeTransfer(request.receiver, amount);
         emit WithdrawClaimedEvent(requestId, request.receiver);
@@ -241,13 +236,6 @@ contract OnChainSymmioVaultV2 is
     function setDepositLimit(uint256 _depositLimit) public onlyRole(SETTER_ROLE) {
         depositLimit = _depositLimit;
         emit DepositLimitUpdatedEvent(_depositLimit);
-    }
-
-    function setMinimumPaybackRatio(uint256 _minimumPaybackRatio) public onlyRole(SETTER_ROLE) {
-        require(_minimumPaybackRatio >= MIN_PAYBACK_RATIO, "SymmioSolverDepositor: Minimum buyback ratio is too low");
-        require(_minimumPaybackRatio <= 1e18, "SymmioSolverDepositor: Minimum buyback ratio is too high");
-        minimumPaybackRatio = _minimumPaybackRatio;
-        emit MinimumPaybackRatioUpdatedEvent(_minimumPaybackRatio);
     }
 
     function pause() external onlyRole(PAUSER_ROLE) {

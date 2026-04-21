@@ -148,9 +148,9 @@
         },
         {
           "indexed": false,
-          "internalType": "uint256",
-          "name": "paybackRatio",
-          "type": "uint256"
+          "internalType": "uint256[]",
+          "name": "_acceptedAmounts",
+          "type": "uint256[]"
         }
       ],
       "name": "WithdrawRequestAcceptedEvent",

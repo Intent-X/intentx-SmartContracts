@@ -8,7 +8,7 @@ interface IOnChainSymmioVault {
         uint256 amount;
         uint256 minAmountOut;
         RequestStatus status;
-        uint256 acceptedRatio;
+        uint256 acceptedAmount;
         uint256 acceptedWithdrawRequestTimestamp;
         uint256 claimableAt;
     }
@@ -29,7 +29,7 @@ interface IOnChainSymmioVault {
     );
     event WithdrawRequestCanceled(uint256 indexed requestId);
     event WithdrawRequestRejected(uint256 indexed requestId);
-    event WithdrawRequestAcceptedEvent(uint256 providedAmount, uint256[] acceptedRequestIds, uint256 paybackRatio);
+    event WithdrawRequestAcceptedEvent(uint256 providedAmount, uint256[] acceptedRequestIds, uint256[] _acceptedAmounts);
     event WithdrawClaimedEvent(uint256 indexed requestId, address indexed receiver);
     event SymmioAddressUpdatedEvent(address indexed newSymmioAddress);
     event DepositLimitUpdatedEvent(uint256 depositLimit);
