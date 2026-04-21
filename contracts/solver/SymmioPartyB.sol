@@ -46,6 +46,8 @@ contract SymmioPartyB is Initializable, PausableUpgradeable, AccessControlUpgrad
 
 		_grantRole(DEFAULT_ADMIN_ROLE, admin);
 		_grantRole(DEFAULT_ADMIN_ROLE, multisig_);
+		_grantRole(PAUSER_ROLE, multisig_);
+		_grantRole(UNPAUSER_ROLE, multisig_);
 		_grantRole(TRUSTED_ROLE, admin);
 		_grantRole(MANAGER_ROLE, admin);
 		symmioAddress = symmioAddress_;
