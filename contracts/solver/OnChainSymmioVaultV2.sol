@@ -55,20 +55,22 @@ contract OnChainSymmioVaultV2 is
         address _symmioAddress,
         address _solver,
         address _signer,
-        uint256 _depositLimit
+        address _multisig
     ) external initializer {
         __ReentrancyGuard_init();
         __AccessControl_init();
         __Pausable_init();
         __EIP712_init("OnChainSymmioVaultV2", "1");
-        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        _grantRole(SETTER_ROLE, _msgSender());
+        _grantRole(DEFAULT_ADMIN_ROLE, _multisig);
+        _grantRole(SETTER_ROLE, _multisig);
+        _grantRole(PAUSER_ROLE, _multisig);
+        _grantRole(UNPAUSER_ROLE, _multisig);
 
         setSymmioAddress(_symmioAddress);
         setSolver(_solver);
-        setDepositLimit(_depositLimit);
+        setDepositLimit(10_000_000 * 10**6);
         setSigner(_signer);
-        _setWithdrawalPeriod(100);
+        _setWithdrawalPeriod(0);
     }
 
     function deposit(uint256 amount) external whenNotPaused nonReentrant {
