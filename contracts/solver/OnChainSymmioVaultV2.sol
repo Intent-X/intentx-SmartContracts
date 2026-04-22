@@ -55,6 +55,7 @@ contract OnChainSymmioVaultV2 is
         address _symmioAddress,
         address _solver,
         address _signer,
+        address _balancer,
         address _multisig
     ) external initializer {
         __ReentrancyGuard_init();
@@ -65,6 +66,8 @@ contract OnChainSymmioVaultV2 is
         _grantRole(SETTER_ROLE, _multisig);
         _grantRole(PAUSER_ROLE, _multisig);
         _grantRole(UNPAUSER_ROLE, _multisig);
+
+        _grantRole(BALANCER_ROLE, _balancer);
 
         setSymmioAddress(_symmioAddress);
         setSolver(_solver);
