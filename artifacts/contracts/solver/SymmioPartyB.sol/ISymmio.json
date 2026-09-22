@@ -27,8 +27,19 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "isCallFromInstantLayer",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "hasRole",
       "outputs": [
         {
           "internalType": "bool",
