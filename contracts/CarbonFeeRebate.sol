@@ -8,11 +8,18 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "./interfaces/IAccountLayer.sol";
+import "./interfaces/ISymmio.sol";
+
 contract CarbonFeeRebate is OwnableUpgradeable {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
     // Constants and state variables
+    // Arbitrum. Constants live in the implementation bytecode, so adding them leaves the proxy's storage layout unchanged.
+    address public constant SYMMIO = 0x8F06459f184553e5d04F07F868720BDaCAB39395;
+    address public constant ACCOUNT_LAYER = 0xA60AC54e18739f1C4681409383DCF881De3eFAbE;
+
     address public carbonTrustedAddress; // Carbon Trusted Address
     address public rebateToken; // Carbon Trusted Address
     uint public totalReward;
@@ -89,6 +96,39 @@ contract CarbonFeeRebate is OwnableUpgradeable {
             IERC20(rebateToken).transfer(_user, withdrawableAmount);
 
             emit Claim(msg.sender, block.timestamp , withdrawableAmount);
+        }
+    }
+
+    /// @notice Claim the rebate straight into a Symmio account owned by the caller instead of the wallet
+    /// @param _account sub-account (or virtual account) on the Account Layer, owned by _user
+    function claimAndDeposit(
+        address _user,
+        uint256 _amountRebate,
+        uint256 _timestamp,
+        bytes memory signature,
+        address _account
+    ) external {
+        require( msg.sender == _user, "Not your claim");
+        require( carbonTrustedAddress != address(0), "Carbon Trusted Address not set yet.");
+        // The voucher does not commit to a destination, so the account must belong to the claimer.
+        require( IAccountLayer(ACCOUNT_LAYER).ownerOf(_account) == _user, "Not your account");
+
+        if ( _amountRebate > claimed[msg.sender] ) {
+
+            bytes32 messageHash = getMessageHash( _user, _amountRebate, _timestamp);
+            bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
+
+            require( recoverSigner(ethSignedMessageHash, signature) == carbonTrustedAddress, "Signer =! Trusted. ");
+
+            uint256 depositAmount = _amountRebate - claimed[msg.sender];
+            claimed[msg.sender] = _amountRebate;
+
+            // Account Layer deposits pull from the owner's wallet, so this contract pays Symmio directly:
+            // depositFor takes collateral from msg.sender and credits any address.
+            IERC20(rebateToken).forceApprove(SYMMIO, depositAmount);
+            ISymmio(SYMMIO).depositFor(_account, depositAmount);
+
+            emit Claim(msg.sender, block.timestamp , depositAmount);
         }
     }
 

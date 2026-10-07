@@ -44,6 +44,12 @@ module.exports = {
   },
 
   networks: {
+    // Fork of Arbitrum One, used by the fork tests: npx hardhat test --network hardhat
+    hardhat: {
+      forking: {
+        url: ARBITRUM_ONE_RPC_URL || "https://arb1.arbitrum.io/rpc",
+      },
+    },
     arbitrumOne: {
       url:
         ARBITRUM_ONE_RPC_URL || "",
